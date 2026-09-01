@@ -23,7 +23,7 @@
 
 ## 🌟 Key Features & Architecture
 
-- **CropIntel AI Layout Navigation Pattern:** Compact STATUS-ONLY top bar + Fixed vertical LEFT sidebar navigation + Expanded center main content area.
+- **Aerospace Digital Twin Layout Navigation Pattern:** Compact STATUS-ONLY top bar + Fixed vertical LEFT sidebar navigation + Expanded center main content area.
 - **Physics-Informed Expected-State Baseline Model:** Derives nominal trajectories for 9 telemetry signals (RPM, CHT, EGT, Oil Pressure, Oil Temp, Fuel Flow, Vibration, Injection Timing, Battery Volts) dynamically based on throttle, altitude, ambient temp, and barometric lapse.
 - **Real-Time Vector Residuals & Mahalanobis Distance:** Computes residual deltas `Observed - Physics Expected` and multivariate statistical distances ($D_M$).
 - **Interactive TAPAS-BH-201 3D Digital Twin Viewer:** Built with Three.js — features `Exterior`, `Internal View`, `Cutaway Depth Slider` (0%-90%), `Exploded View`, `Engine Focus` camera animation, and 3D raycasting sensor inspection.

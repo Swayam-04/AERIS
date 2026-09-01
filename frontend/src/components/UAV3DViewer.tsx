@@ -12,7 +12,9 @@ import {
   Info,
   Box,
   RotateCcw,
-  X
+  List,
+  X,
+  ChevronRight
 } from 'lucide-react';
 
 interface UAV3DViewerProps {
@@ -48,6 +50,8 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   const [selectedComponent, setSelectedComponent] = useState<UAVComponentInfo | null>(null);
   const [hoveredNodeName, setHoveredNodeName] = useState<string | null>(null);
   const [mouseScreenPos, setMouseScreenPos] = useState<{ x: number; y: number } | null>(null);
+  const [calloutScreenPos, setCalloutScreenPos] = useState<{ x: number; y: number } | null>(null);
+  const [showPartsList, setShowPartsList] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isCustomModelLoaded, setIsCustomModelLoaded] = useState(false);
 
@@ -73,9 +77,11 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       if (name.includes('aileron') && name.includes('left')) return UAV_COMPONENT_CATALOG.aileronLeft;
       if (name.includes('rudder')) return UAV_COMPONENT_CATALOG.rudder;
       if (name.includes('elevator')) return UAV_COMPONENT_CATALOG.elevator;
+      if (name.includes('hub')) return UAV_COMPONENT_CATALOG.propellerHub;
       if (name.includes('cowling') || name.includes('nacelle')) return UAV_COMPONENT_CATALOG.engineCowling;
-      if (name.includes('propeller') || name.includes('blade') || name.includes('hub') || name.includes('prop')) return UAV_COMPONENT_CATALOG.propeller;
+      if (name.includes('propeller') || name.includes('blade') || name.includes('prop')) return UAV_COMPONENT_CATALOG.propeller;
       if (name.includes('engine') || name.includes('lycoming') || name.includes('rotax')) return UAV_COMPONENT_CATALOG.engine;
+      if (name.includes('wing') && name.includes('root')) return UAV_COMPONENT_CATALOG.wingRoot;
       if (name.includes('wing') && name.includes('right')) return UAV_COMPONENT_CATALOG.wingRight;
       if (name.includes('wing') && name.includes('left')) return UAV_COMPONENT_CATALOG.wingLeft;
       if (name.includes('wing')) return UAV_COMPONENT_CATALOG.wingRight;
@@ -83,8 +89,10 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       if (name.includes('vertical_tail') || name.includes('fin')) return UAV_COMPONENT_CATALOG.verticalStabilizer;
       if (name.includes('horizontal_tail') || name.includes('stabilizer')) return UAV_COMPONENT_CATALOG.horizontalStabilizer;
       if (name.includes('tail')) return UAV_COMPONENT_CATALOG.verticalStabilizer;
-      if (name.includes('gear') || name.includes('wheel')) return UAV_COMPONENT_CATALOG.landingGear;
-      if (name.includes('antenna') || name.includes('sensor')) return UAV_COMPONENT_CATALOG.antennas;
+      if (name.includes('wheel')) return UAV_COMPONENT_CATALOG.wheels;
+      if (name.includes('gear')) return UAV_COMPONENT_CATALOG.landingGear;
+      if (name.includes('antenna')) return UAV_COMPONENT_CATALOG.antennas;
+      if (name.includes('sensor')) return UAV_COMPONENT_CATALOG.sensors;
       if (name.includes('fuselage') || name.includes('body')) return UAV_COMPONENT_CATALOG.fuselage;
 
       // Internal component names
@@ -191,9 +199,9 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     grid.position.y = -3.5;
     scene.add(grid);
 
-    // Root Group for DRDO RUSTOM-1
+    // Root Group for DRDO RUSTOM
     const uavRootGroup = new THREE.Group();
-    uavRootGroup.name = "DRDO_RUSTOM_1";
+    uavRootGroup.name = "DRDO_RUSTOM";
     uavRootRef.current = uavRootGroup;
     scene.add(uavRootGroup);
 
@@ -394,6 +402,34 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     };
   }, []);
 
+  // Update 3D-Anchored Callout Pointer Screen Coordinates
+  useEffect(() => {
+    if (!selectedComponent || !cameraRef.current || !rendererRef.current) {
+      setCalloutScreenPos(null);
+      return;
+    }
+
+    const updateCalloutPos = () => {
+      if (!selectedComponent || !cameraRef.current || !rendererRef.current) return;
+
+      const worldPos = new THREE.Vector3(...selectedComponent.position);
+      const tempVector = worldPos.clone().project(cameraRef.current);
+
+      const width = rendererRef.current.domElement.clientWidth;
+      const height = rendererRef.current.domElement.clientHeight;
+
+      const x = (tempVector.x * 0.5 + 0.5) * width;
+      const y = (-tempVector.y * 0.5 + 0.5) * height;
+
+      setCalloutScreenPos({ x, y });
+    };
+
+    const interval = setInterval(updateCalloutPos, 30);
+    updateCalloutPos();
+
+    return () => clearInterval(interval);
+  }, [selectedComponent]);
+
   // Update Material Opacity based on View Mode (Exterior vs Interior vs Cutaway)
   useEffect(() => {
     const targetGroup = isCustomModelLoaded ? customModelSceneRef.current : exteriorShellRef.current;
@@ -474,6 +510,10 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     }
   };
 
+  const catalogList = Object.values(UAV_COMPONENT_CATALOG).filter(
+    (c) => viewMode === 'interior' || !c.source.includes('CONCEPTUAL')
+  );
+
   return (
     <div
       ref={containerRef}
@@ -539,13 +579,28 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
         <div className="flex items-center gap-2 bg-[#0a0f1d] px-3 py-1 rounded border border-[#1a2438] font-mono text-xs shadow-md">
           <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-          <span className="text-slate-100 font-bold uppercase">RUSTOM-1 DIGITAL TWIN</span>
+          <span className="text-slate-100 font-bold uppercase">RUSTOM DIGITAL TWIN</span>
           <span className="text-slate-600">|</span>
           <span className="text-[#38bdf8] font-semibold uppercase">{viewMode} MODE</span>
         </div>
       </div>
 
-      {/* Tiny Hover Tooltip Near Cursor (No permanent label clutter) */}
+      {/* 3D-Anchored Callout Pointer attached to selected component's 3D coordinates */}
+      {selectedComponent && calloutScreenPos && (
+        <div
+          className="pointer-events-none absolute z-30 transition-none -translate-x-1/2 -translate-y-full mb-3"
+          style={{ left: `${calloutScreenPos.x}px`, top: `${calloutScreenPos.y}px` }}
+        >
+          <div className="bg-[#0a0f1d] border border-[#0284c7] px-3 py-1.5 rounded font-mono text-xs shadow-2xl text-slate-100 font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#38bdf8] animate-ping shrink-0" />
+            <span className="uppercase text-[#38bdf8] tracking-wide">{selectedComponent.name}</span>
+          </div>
+          <div className="w-0.5 h-6 bg-[#0284c7] mx-auto" />
+          <div className="w-2 h-2 rounded-full bg-[#38bdf8] border border-white mx-auto -mt-1" />
+        </div>
+      )}
+
+      {/* Hover Tooltip Near Cursor (No permanent label clutter) */}
       {hoveredNodeName && mouseScreenPos && !selectedComponent && (
         <div
           className="pointer-events-none absolute z-30 bg-[#0a0f1d]/90 backdrop-blur px-2.5 py-1 rounded border border-[#0284c7] font-mono text-[11px] text-[#38bdf8] shadow-lg flex items-center gap-1.5 -translate-x-1/2 -translate-y-full mb-2"
@@ -564,9 +619,56 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         </div>
       )}
 
+      {/* Toggle Parts List Button */}
+      <button
+        onClick={() => setShowPartsList(!showPartsList)}
+        className="absolute top-14 right-3 z-20 bg-[#0a0f1d] hover:bg-[#101728] border border-[#1a2438] text-slate-300 hover:text-slate-100 px-2.5 py-1.5 rounded font-mono text-xs flex items-center gap-1.5 shadow-md"
+      >
+        <List size={13} className="text-[#38bdf8]" />
+        <span>RUSTOM COMPONENTS</span>
+      </button>
+
+      {/* RUSTOM COMPONENTS List Drawer */}
+      {showPartsList && (
+        <div className="absolute top-24 right-3 z-30 w-72 max-h-80 overflow-y-auto eng-panel p-3 bg-[#0a0f1d] border border-[#1a2438] text-xs font-mono space-y-1.5 shadow-2xl animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-[#1a2438] pb-1.5 mb-2">
+            <span className="font-sans font-bold text-slate-200 text-xs uppercase tracking-wider">
+              RUSTOM COMPONENTS
+            </span>
+            <button
+              onClick={() => setShowPartsList(false)}
+              className="text-slate-400 hover:text-slate-200"
+            >
+              <X size={13} />
+            </button>
+          </div>
+
+          {catalogList.map((comp) => (
+            <button
+              key={comp.id}
+              onClick={() => {
+                setSelectedComponent(comp);
+                handleFocusComponent(comp);
+              }}
+              className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between transition ${
+                selectedComponent?.id === comp.id
+                  ? 'bg-[#0284c7] text-white font-bold'
+                  : 'text-slate-300 hover:bg-[#101728] hover:text-slate-100'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full ${selectedComponent?.id === comp.id ? 'bg-white' : 'bg-[#38bdf8]'}`} />
+                <span>{comp.name}</span>
+              </span>
+              <ChevronRight size={12} className="opacity-60" />
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Single Compact Component Details Panel */}
       {selectedComponent && (
-        <div className="absolute top-14 right-3 z-30 w-80 eng-panel p-4 bg-[#0a0f1d] border border-[#0284c7] text-xs font-mono space-y-3 shadow-2xl animate-fadeIn">
+        <div className="absolute top-24 right-3 z-30 w-80 eng-panel p-4 bg-[#0a0f1d] border border-[#0284c7] text-xs font-mono space-y-3 shadow-2xl animate-fadeIn">
           <div className="flex items-center justify-between border-b border-[#1a2438] pb-2">
             <div>
               <span className="text-[10px] text-[#38bdf8] font-sans font-bold uppercase block tracking-wider">
@@ -621,14 +723,14 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
             </span>
           </div>
 
-          {/* Action Buttons: [ FOCUS ] & Close */}
+          {/* Action Buttons: [ FOCUS COMPONENT ] & Close */}
           <div className="flex items-center gap-2 pt-1 font-sans">
             <button
               onClick={() => handleFocusComponent(selectedComponent)}
               className="flex-1 py-1.5 rounded bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition"
             >
               <Focus size={13} />
-              <span>[ FOCUS ]</span>
+              <span>[ FOCUS COMPONENT ]</span>
             </button>
             <button
               onClick={() => setSelectedComponent(null)}
@@ -645,7 +747,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         <button
           onClick={handleFitToView}
           className="px-2.5 py-1 rounded hover:bg-[#101728] text-slate-300 hover:text-slate-100 flex items-center gap-1 transition"
-          title="Fit camera bounds to Rustom-1 aircraft"
+          title="Fit camera bounds to Rustom aircraft"
         >
           <Box size={13} className="text-[#38bdf8]" />
           <span>Fit View</span>

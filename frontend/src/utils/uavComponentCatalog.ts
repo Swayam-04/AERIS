@@ -1,7 +1,7 @@
 export interface UAVComponentInfo {
   id: string;
   name: string;
-  category: 'Propulsion' | 'Aerodynamic Structure' | 'Flight Control' | 'Avionics & Sensors' | 'Landing Gear' | 'Thermal & Systems';
+  category: 'Propulsion' | 'Aerodynamic Structure' | 'Flight Control' | 'Avionics & Sensors' | 'Landing System' | 'Thermal & Systems';
   function: string;
   description?: string;
   source: 'Model geometry' | 'CONCEPTUAL DIGITAL-TWIN COMPONENT';
@@ -13,20 +13,20 @@ export interface UAVComponentInfo {
 export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
   nose: {
     id: 'nose',
-    name: 'Nose Radome & Forward Payload',
+    name: 'Nose',
     category: 'Avionics & Sensors',
-    function: 'Houses data link communications and forward optical sensors.',
-    description: 'Streamlined nose section containing tactical telemetry antennas and payload electronics.',
+    function: 'Houses satellite data link communications and optical payload sensors.',
+    description: 'Forward streamlined radome section.',
     source: 'Model geometry',
     position: [2.5, 0.4, 0],
     status: 'NORMAL'
   },
   fuselage: {
     id: 'fuselage',
-    name: 'Fuselage Main Body',
+    name: 'Fuselage',
     category: 'Aerodynamic Structure',
-    function: 'Houses payload, fuel bladders, and structural airframe.',
-    description: 'Lightweight composite semi-monocoque fuselage structure.',
+    function: 'Main structural body housing payload, fuel bladders, and flight avionics.',
+    description: 'Carbon-composite semi-monocoque airframe structure.',
     source: 'Model geometry',
     position: [0, 0, 0],
     status: 'NORMAL'
@@ -35,8 +35,8 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     id: 'wingRight',
     name: 'Right Wing',
     category: 'Aerodynamic Structure',
-    function: 'Generates aerodynamic lift and supports aircraft flight.',
-    description: 'High aspect-ratio composite wing providing lift and structural rigidity.',
+    function: 'Generates aerodynamic lift and contributes to aircraft stability and flight performance.',
+    description: 'High aspect-ratio composite wing providing lift.',
     source: 'Model geometry',
     position: [0, 0.1, 3.95],
     status: 'NORMAL'
@@ -45,18 +45,28 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     id: 'wingLeft',
     name: 'Left Wing',
     category: 'Aerodynamic Structure',
-    function: 'Generates aerodynamic lift and supports aircraft flight.',
-    description: 'High aspect-ratio composite wing providing lift and structural rigidity.',
+    function: 'Generates aerodynamic lift and contributes to aircraft stability and flight performance.',
+    description: 'High aspect-ratio composite wing providing lift.',
     source: 'Model geometry',
     position: [0, 0.1, -3.95],
+    status: 'NORMAL'
+  },
+  wingRoot: {
+    id: 'wingRoot',
+    name: 'Wing Root',
+    category: 'Aerodynamic Structure',
+    function: 'Attaches wing assembly to main fuselage and transfers structural load.',
+    description: 'Heavy-duty wing spar attachment joint.',
+    source: 'Model geometry',
+    position: [0, 0.1, 1.2],
     status: 'NORMAL'
   },
   aileronRight: {
     id: 'aileronRight',
     name: 'Right Aileron',
     category: 'Flight Control',
-    function: 'Controls roll angle and banking lateral movement.',
-    description: 'Trailing edge control surface attached to the right wing.',
+    function: 'Controls aircraft roll and lateral banking movement.',
+    description: 'Trailing edge control surface on the right wing.',
     source: 'Model geometry',
     position: [-0.4, 0.1, 3.5],
     status: 'NORMAL'
@@ -65,15 +75,15 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     id: 'aileronLeft',
     name: 'Left Aileron',
     category: 'Flight Control',
-    function: 'Controls roll angle and banking lateral movement.',
-    description: 'Trailing edge control surface attached to the left wing.',
+    function: 'Controls aircraft roll and lateral banking movement.',
+    description: 'Trailing edge control surface on the left wing.',
     source: 'Model geometry',
     position: [-0.4, 0.1, -3.5],
     status: 'NORMAL'
   },
   verticalStabilizer: {
     id: 'verticalStabilizer',
-    name: 'Vertical Stabilizer & Tail Fin',
+    name: 'Vertical Stabilizer',
     category: 'Aerodynamic Structure',
     function: 'Provides directional yaw stability during flight.',
     description: 'Vertical tail fin maintaining directional stability.',
@@ -85,8 +95,8 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     id: 'rudder',
     name: 'Rudder',
     category: 'Flight Control',
-    function: 'Controls yaw and directional heading movement.',
-    description: 'Hinged control surface on the vertical stabilizer for directional yaw control.',
+    function: 'Controls directional/yaw movement.',
+    description: 'Hinged control surface attached to vertical stabilizer.',
     source: 'Model geometry',
     position: [-2.8, 1.2, 0],
     status: 'NORMAL'
@@ -95,8 +105,8 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     id: 'horizontalStabilizer',
     name: 'Horizontal Stabilizer',
     category: 'Aerodynamic Structure',
-    function: 'Provides longitudinal pitch stability and trim control.',
-    description: 'Tailplane structure maintaining pitch equilibrium.',
+    function: 'Provides longitudinal pitch stability and flight trim control.',
+    description: 'Horizontal tailplane structure.',
     source: 'Model geometry',
     position: [-2.6, 1.8, 0],
     status: 'NORMAL'
@@ -106,62 +116,92 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     name: 'Elevator',
     category: 'Flight Control',
     function: 'Controls pitch attitude and aircraft climb/descent angle.',
-    description: 'Hinged control surface on the horizontal tailplane.',
+    description: 'Hinged control surface attached to horizontal tailplane.',
     source: 'Model geometry',
     position: [-2.8, 1.8, 0],
     status: 'NORMAL'
   },
   engine: {
     id: 'engine',
-    name: 'Lycoming O-320',
+    name: 'Engine',
     category: 'Propulsion',
-    function: 'Provides propulsion power to the aircraft.',
-    description: 'Four-cylinder, air-cooled, horizontally opposed engine producing 112 kW / 150 hp.',
+    function: 'Provides mechanical power for aircraft propulsion.',
+    description: 'Four-cylinder, air-cooled, horizontally opposed engine.',
     source: 'Model geometry',
     position: [-0.5, -0.2, 0],
     status: 'NORMAL',
     details: {
+      'Powerplant': 'Lycoming O-320 Class',
       'Configuration': '4-cylinder, air-cooled, horizontally opposed',
-      'Power': '112 kW / 150 hp',
-      'Powerplant': '1 × Lycoming O-320'
+      'Power': '112 kW / 150 hp'
     }
   },
   engineCowling: {
     id: 'engineCowling',
-    name: 'Engine Cowling & Nacelle',
+    name: 'Engine Cowling',
     category: 'Propulsion',
-    function: 'Protects engine block and directs cooling air.',
-    description: 'Aerodynamic fairing housing the Lycoming O-320 powerplant.',
+    function: 'Protects engine block and directs cooling airflow.',
+    description: 'Aerodynamic engine fairing.',
     source: 'Model geometry',
     position: [-0.5, -0.2, 0],
     status: 'NORMAL'
   },
   propeller: {
     id: 'propeller',
-    name: 'Propeller Assembly',
+    name: 'Propeller',
     category: 'Propulsion',
-    function: 'Converts rotational engine power into aircraft thrust.',
-    description: 'Pusher propeller assembly driven by the Lycoming O-320 engine.',
+    function: 'Converts rotational engine power into thrust.',
+    description: 'Propeller assembly driven by the engine.',
+    source: 'Model geometry',
+    position: [-1.0, -0.2, 0],
+    status: 'NORMAL'
+  },
+  propellerHub: {
+    id: 'propellerHub',
+    name: 'Propeller Hub',
+    category: 'Propulsion',
+    function: 'Connects propeller blades to engine drive shaft.',
+    description: 'Central hub housing pitch mechanism.',
     source: 'Model geometry',
     position: [-1.0, -0.2, 0],
     status: 'NORMAL'
   },
   landingGear: {
     id: 'landingGear',
-    name: 'Landing Gear & Wheels',
-    category: 'Landing Gear',
-    function: 'Supports aircraft during ground operations, taxiing, takeoff, and landing.',
-    description: 'Main wheel struts and nose gear assembly.',
+    name: 'Landing Gear',
+    category: 'Landing System',
+    function: 'Supports the aircraft during ground operations, taxiing, takeoff, and landing.',
+    description: 'Tricycle strut landing gear assembly.',
     source: 'Model geometry',
     position: [0, -0.6, 0],
     status: 'NORMAL'
   },
+  wheels: {
+    id: 'wheels',
+    name: 'Wheels',
+    category: 'Landing System',
+    function: 'Provides rolling contact and braking during ground operations.',
+    description: 'Main wheel tires and brake disc assembly.',
+    source: 'Model geometry',
+    position: [0, -0.7, 0],
+    status: 'NORMAL'
+  },
+  sensors: {
+    id: 'sensors',
+    name: 'Sensors',
+    category: 'Avionics & Sensors',
+    function: 'Collects airspeed, altitude, and environmental telemetry.',
+    description: 'Pitot-static tubes and ambient sensors.',
+    source: 'Model geometry',
+    position: [2.0, -0.4, 0],
+    status: 'NORMAL'
+  },
   antennas: {
     id: 'antennas',
-    name: 'Tactical Sensors & Antennas',
+    name: 'Antennas',
     category: 'Avionics & Sensors',
-    function: 'Handles command data link, telemetry, and payload communication.',
-    description: 'Antenna array and environmental sensor probes.',
+    function: 'Transmits and receives real-time telemetry and flight commands.',
+    description: 'VHF/UHF telemetry antenna array.',
     source: 'Model geometry',
     position: [1.0, 0.8, 0],
     status: 'NORMAL'
@@ -170,7 +210,7 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
   // Interior / Conceptual Digital-Twin Components
   engineBlock: {
     id: 'engineBlock',
-    name: 'Lycoming O-320 Engine Block',
+    name: 'Engine Block',
     category: 'Thermal & Systems',
     function: 'Houses crankcase, pistons, and combustion chambers.',
     description: 'Four-cylinder horizontally opposed piston cylinder block.',
@@ -184,7 +224,7 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
   },
   fuelSystem: {
     id: 'fuelSystem',
-    name: 'Fuel Delivery & Injection Lines',
+    name: 'Fuel System',
     category: 'Thermal & Systems',
     function: 'Delivers metered fuel mixture to engine cylinders.',
     description: 'Fuel lines, feed pumps, and mixture metering control.',
@@ -194,7 +234,7 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
   },
   oilSystem: {
     id: 'oilSystem',
-    name: 'Engine Lubrication Loop',
+    name: 'Oil & Lubrication System',
     category: 'Thermal & Systems',
     function: 'Circulates cooling oil to crankcase bearings and cylinders.',
     description: 'Oil pump, sump, filter, and cooling radiator matrix.',

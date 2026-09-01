@@ -1,12 +1,12 @@
 # AERIS — Aero Engine Reliability & Intelligence System
 
-**AERIS** (Aero Engine Reliability & Intelligence System) is an advanced AI-enabled digital-twin web platform designed for real-time health monitoring, multivariate anomaly detection, explainable fault diagnosis, remaining useful life (RUL) estimation, and mission reliability enhancement of aero-piston engines powering the **DRDO RUSTOM-1** MALE UAV.
+**AERIS** (Aero Engine Reliability & Intelligence System) is an advanced AI-enabled digital-twin web platform designed for real-time health monitoring, multivariate anomaly detection, explainable fault diagnosis, remaining useful life (RUL) estimation, and mission reliability enhancement of aero-piston engines powering the **DRDO RUSTOM** UAV.
 
 ---
 
-## 🛩️ DRDO RUSTOM-1 Aircraft Identity & Specifications
+## 🛩️ DRDO RUSTOM Aircraft Identity & Specifications
 
-- **Aircraft Model:** DRDO RUSTOM-1
+- **Aircraft Model:** DRDO RUSTOM
 - **Type:** MALE UAV
 - **Manufacturer:** DRDO ADE (Aeronautical Development Establishment)
 - **Powerplant:** 1 × Lycoming O-320 (Four-cylinder, air-cooled, horizontally opposed engine)
@@ -27,7 +27,7 @@
 - **Aerospace Digital Twin Layout Navigation Pattern:** Compact STATUS-ONLY top bar + Fixed vertical LEFT sidebar navigation + Expanded center main content area.
 - **Physics-Informed Expected-State Baseline Model:** Derives nominal trajectories for 9 telemetry signals (RPM, CHT, EGT, Oil Pressure, Oil Temp, Fuel Flow, Vibration, Injection Timing, Battery Volts) dynamically based on throttle, altitude, ambient temp, and barometric lapse.
 - **Real-Time Vector Residuals & Mahalanobis Distance:** Computes residual deltas `Observed - Physics Expected` and multivariate statistical distances ($D_M$).
-- **Interactive DRDO RUSTOM-1 3D Digital Twin Viewer:** Built with Three.js — features `[ EXTERIOR ]` and `[ INTERIOR ]` view modes, Raycasting clickable component inspection, and `[ FOCUS CAMERA ]` camera controls.
+- **Interactive DRDO RUSTOM 3D Digital Twin Viewer:** Built with Three.js — features `[ EXTERIOR ]` and `[ INTERIOR ]` view modes, Raycasting clickable component inspection with 3D-anchored callouts, and `[ FOCUS COMPONENT ]` camera controls.
 - **Conceptual Digital-Twin Visualization Disclaimer:** Clearly demarcated for non-classified conceptual internal health monitoring architecture.
 - **Explainable Diagnostic Fault Center:** Ranked physical evidence summaries for cylinder misfires, fuel injector abnormalities, oil pressure loss, thermal overheating, and crankcase vibration spikes.
 - **RUL & Degradation Model:** Physics-informed wear accumulation model tracking remaining flight hours against 1,200h TBO baseline with confidence bounds.

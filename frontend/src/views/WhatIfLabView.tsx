@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaultType, DigitalTwinState } from '../types/telemetry';
-import { GitCompare, Play, Layers, TrendingDown, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { GitCompare, Play } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 
 export const WhatIfLabView: React.FC = () => {
   const [faultType, setFaultType] = useState<FaultType>('injector_abnormality');
@@ -51,31 +51,31 @@ export const WhatIfLabView: React.FC = () => {
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 font-mono text-xs select-none">
       {/* Title */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#162035] pb-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
-            <GitCompare className="w-5 h-5 text-cyan-400" />
-            What-If Comparative Experiment Lab
+          <h2 className="text-lg font-bold text-slate-100 font-sans tracking-wide flex items-center gap-2 uppercase">
+            <GitCompare className="w-5 h-5 text-[#38bdf8]" />
+            What-If Comparative Experiment Sandbox
           </h2>
-          <p className="text-xs text-slate-400">Isolated sandbox: Baseline Normal Flight vs Degraded Scenario Comparative Analysis</p>
+          <p className="text-xs text-slate-400">Isolated sandbox: Nominal Baseline Flight vs Degraded Fault Profile Delta Analysis</p>
         </div>
       </div>
 
-      {/* Experiment Configuration Panel */}
-      <div className="glass-panel p-6 rounded-xl border border-slate-800 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">
-          Configure What-If Scenario Experiment
-        </h3>
+      {/* Experiment Config Panel */}
+      <div className="eng-panel p-4 space-y-4">
+        <div className="border-b border-[#162035] pb-2 font-sans">
+          <span className="font-bold text-xs uppercase text-slate-200">EXPERIMENT SCENARIO PARAMETERS</span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="text-xs text-slate-400 font-semibold block mb-1.5 uppercase">Fault Type</label>
+            <label className="text-[10px] text-slate-400 font-sans font-bold block mb-1 uppercase">FAULTS TYPE</label>
             <select
               value={faultType}
               onChange={(e) => setFaultType(e.target.value as FaultType)}
-              className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl p-3 font-semibold focus:border-cyan-500 outline-none"
+              className="w-full bg-[#0c1224] border border-[#162035] text-slate-200 text-xs rounded p-2 focus:border-[#0284c7] outline-none"
             >
               <option value="misfire">Cylinder Misfire</option>
               <option value="injector_abnormality">Injector Restriction / Lean</option>
@@ -86,7 +86,7 @@ export const WhatIfLabView: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 font-semibold block mb-1.5 uppercase">Severity Factor ({ (severity * 100).toFixed(0) }%)</label>
+            <label className="text-[10px] text-slate-400 font-sans font-bold block mb-1 uppercase">SEVERITY FACTOR ({(severity * 100).toFixed(0)}%)</label>
             <input
               type="range"
               min="0.2"
@@ -94,19 +94,19 @@ export const WhatIfLabView: React.FC = () => {
               step="0.05"
               value={severity}
               onChange={(e) => setSeverity(parseFloat(e.target.value))}
-              className="w-full mt-3 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1.5 mt-2 bg-[#162035] rounded appearance-none cursor-pointer accent-[#38bdf8]"
             />
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 font-semibold block mb-1.5 uppercase">Fault Injection Time ({faultStartSec}s)</label>
+            <label className="text-[10px] text-slate-400 font-sans font-bold block mb-1 uppercase">INJECTION OFFSET ({faultStartSec}s)</label>
             <input
               type="number"
               min="10"
               max="240"
               value={faultStartSec}
               onChange={(e) => setFaultStartSec(parseInt(e.target.value))}
-              className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl p-3 font-mono focus:border-cyan-500 outline-none"
+              className="w-full bg-[#0c1224] border border-[#162035] text-slate-200 text-xs rounded p-2 focus:border-[#0284c7] outline-none font-mono"
             />
           </div>
         </div>
@@ -114,34 +114,34 @@ export const WhatIfLabView: React.FC = () => {
         <button
           onClick={runSimulation}
           disabled={loading}
-          className="w-full py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+          className="w-full py-2.5 rounded bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs font-sans uppercase tracking-wider transition flex items-center justify-center gap-2"
         >
-          <Play size={16} /> {loading ? 'Running Isolated Simulation...' : 'Execute What-If Comparative Simulation'}
+          <Play size={14} /> {loading ? 'RUNNING COMPARATIVE SIMULATION...' : 'EXECUTE WHAT-IF SIMULATION'}
         </button>
       </div>
 
-      {/* Results Comparison Matrix */}
+      {/* Results Comparison Chart */}
       {simulationData && (
-        <div className="space-y-6">
-          {/* Comparative Graph */}
-          <div className="glass-panel p-6 rounded-xl border border-slate-800 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">
-              Health & Temperature Divergence Trajectory (Baseline vs Degraded)
-            </h3>
+        <div className="eng-panel p-4 space-y-2">
+          <div className="border-b border-[#162035] pb-2 font-sans">
+            <span className="font-bold text-xs uppercase text-slate-200">
+              HEALTH & TEMPERATURE DIVERGENCE TRAJECTORY (BASELINE VS DEGRADED)
+            </span>
+          </div>
 
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px' }} />
-                  <Legend />
-                  <Line type="monotone" dataKey="health_base" name="Baseline Health %" stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="health_deg" name="Degraded Health %" stroke="#f43f5e" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="egt_deg" name="Degraded EGT °C" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#162035" />
+                <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
+                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={{ backgroundColor: '#090e1c', borderColor: '#212f4d', fontSize: '11px', color: '#f1f5f9' }} />
+                <Legend />
+                <Line type="monotone" dataKey="health_base" name="Nominal Baseline Health %" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="health_deg" name="Fault Profile Health %" stroke="#ef4444" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="egt_deg" name="Degraded EGT (°C)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

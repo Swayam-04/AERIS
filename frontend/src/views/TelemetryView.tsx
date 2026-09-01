@@ -1,6 +1,6 @@
 import React from 'react';
 import { DigitalTwinState } from '../types/telemetry';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, YAxis, Tooltip } from 'recharts';
 import { Gauge, Thermometer, Flame, Activity, Zap, Wind, Sliders, BatteryCharging, Radio } from 'lucide-react';
 
 interface TelemetryViewProps {
@@ -33,7 +33,7 @@ export const TelemetryView: React.FC<TelemetryViewProps> = ({ state, history }) 
       val: state.observed.rpm,
       exp: state.expected.rpm,
       delta: state.residuals.rpm,
-      color: '#06b6d4',
+      color: '#38bdf8',
       warnRange: '1200 - 5800 RPM',
       isWarning: state.observed.rpm < 1200 || state.observed.rpm > 5900,
     },
@@ -81,7 +81,7 @@ export const TelemetryView: React.FC<TelemetryViewProps> = ({ state, history }) 
       val: state.observed.oil_temp_c,
       exp: state.expected.oil_temp_c,
       delta: state.residuals.oil_temp_c,
-      color: '#3b82f6',
+      color: '#38bdf8',
       warnRange: '60 - 118 °C',
       isWarning: state.observed.oil_temp_c > 118,
     },
@@ -93,7 +93,7 @@ export const TelemetryView: React.FC<TelemetryViewProps> = ({ state, history }) 
       val: state.observed.fuel_flow_lph,
       exp: state.expected.fuel_flow_lph,
       delta: state.residuals.fuel_flow_lph,
-      color: '#8b5cf6',
+      color: '#a855f7',
       warnRange: '4.0 - 42.0 L/h',
       isWarning: Math.abs(state.residuals.fuel_flow_lph) > 3.5,
     },
@@ -117,7 +117,7 @@ export const TelemetryView: React.FC<TelemetryViewProps> = ({ state, history }) 
       val: state.observed.injection_timing_deg,
       exp: state.expected.injection_timing_deg,
       delta: state.residuals.injection_timing_deg,
-      color: '#06b6d4',
+      color: '#38bdf8',
       warnRange: '10 - 28 ° BTDC',
       isWarning: Math.abs(state.residuals.injection_timing_deg) > 3.0,
     },
@@ -136,76 +136,74 @@ export const TelemetryView: React.FC<TelemetryViewProps> = ({ state, history }) 
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Title */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#162035] pb-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
-            <Radio className="w-5 h-5 text-cyan-400" />
+          <h2 className="text-lg font-bold text-slate-100 uppercase tracking-wide flex items-center gap-2">
+            <Radio className="w-4 h-4 text-[#38bdf8]" />
             High-Frequency Telemetry Signal Console
           </h2>
-          <p className="text-xs text-slate-400">9 Core aero-piston parameters with real-time physics residual tracking</p>
+          <p className="text-xs text-slate-400 font-mono">9 Core aero-piston parameters with real-time physics residual tracking</p>
         </div>
-        <div className="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-          SAMPLING RATE: <strong className="text-cyan-400">1.0 Hz (1000ms)</strong>
+        <div className="text-xs font-mono text-slate-400 bg-[#090e1c] px-3 py-1 rounded border border-[#162035]">
+          SAMPLING FREQUENCY: <strong className="text-[#38bdf8]">1.0 Hz (1000ms)</strong>
         </div>
       </div>
 
-      {/* 9 Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Structured Signal Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {signals.map((sig) => {
           const Icon = sig.icon;
           return (
             <div
               key={sig.id}
-              className={`glass-panel p-5 rounded-xl border transition space-y-3 ${
-                sig.isWarning ? 'border-rose-500/60 bg-rose-950/20' : 'border-slate-800 hover:border-cyan-500/40'
+              className={`eng-panel p-3.5 space-y-2.5 transition ${
+                sig.isWarning ? 'border-rose-500/60 bg-rose-950/20' : ''
               }`}
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
-                    <Icon className="w-4 h-4" style={{ color: sig.color }} />
-                  </div>
-                  <span className="text-xs font-semibold text-slate-200 uppercase">{sig.name}</span>
+                  <Icon className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-200 uppercase font-mono">{sig.name}</span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
-                  sig.isWarning ? 'bg-rose-500 text-slate-950' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                  sig.isWarning ? 'eng-badge-critical' : 'eng-badge-success'
                 }`}>
                   {sig.isWarning ? 'ALERT' : 'NOMINAL'}
                 </span>
               </div>
 
-              {/* Main Metric Value */}
-              <div className="flex items-baseline justify-between">
+              {/* Metric Values */}
+              <div className="flex items-baseline justify-between font-mono">
                 <div>
-                  <span className="text-3xl font-bold font-mono text-slate-100">{sig.val}</span>
-                  <span className="text-xs text-slate-400 ml-1.5 font-mono">{sig.unit}</span>
+                  <span className="text-2xl font-bold text-slate-100">{sig.val}</span>
+                  <span className="text-xs text-slate-400 ml-1">{sig.unit}</span>
                 </div>
-                <div className="text-right text-xs font-mono">
+                <div className="text-right text-xs">
                   <span className="text-slate-500 block text-[10px]">PHYSICS EXP</span>
-                  <span className="text-slate-400">{sig.exp} {sig.unit}</span>
+                  <span className="text-slate-300">{sig.exp} {sig.unit}</span>
                 </div>
               </div>
 
-              {/* Sparkline Trend Chart */}
-              <div className="h-16 w-full pt-1">
+              {/* Sparkline Chart */}
+              <div className="h-12 w-full pt-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={historyData}>
                     <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '6px', fontSize: '11px' }}
+                      contentStyle={{ backgroundColor: '#090e1c', borderColor: '#212f4d', borderRadius: '4px', fontSize: '11px', color: '#f1f5f9' }}
                     />
-                    <Area type="monotone" dataKey={sig.id} stroke={sig.color} fill={sig.color} fillOpacity={0.15} strokeWidth={2} />
+                    <Area type="monotone" dataKey={sig.id} stroke={sig.color} fill={sig.color} fillOpacity={0.12} strokeWidth={1.5} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Bottom Info */}
-              <div className="flex items-center justify-between text-[11px] font-mono pt-2 border-t border-slate-800 text-slate-400">
-                <span>Tol: {sig.warnRange}</span>
-                <span className={sig.delta !== 0 ? (sig.delta > 0 ? 'text-amber-400' : 'text-cyan-400') : 'text-slate-500'}>
+              <div className="flex items-center justify-between text-[10px] font-mono pt-2 border-t border-[#162035] text-slate-400">
+                <span>Range: {sig.warnRange}</span>
+                <span className={sig.delta !== 0 ? (sig.delta > 0 ? 'text-amber-400 font-bold' : 'text-[#38bdf8] font-bold') : 'text-slate-500'}>
                   Δ {sig.delta > 0 ? `+${sig.delta}` : sig.delta}
                 </span>
               </div>

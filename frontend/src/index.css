@@ -2,72 +2,130 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-app: #060913;
+  --bg-surface: #090e1c;
+  --bg-surface-elevated: #0e152a;
+  --bg-surface-active: #131c36;
+  --border-subtle: #162035;
+  --border-strong: #212f4d;
+  --border-accent: #0284c7;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-code: #38bdf8;
+
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-critical: #ef4444;
+  --status-info: #0284c7;
+}
+
 @layer base {
   body {
-    background-color: #080c18;
-    color: #e2e8f0;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Custom Scrollbars */
+/* Custom Clean Engineering Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: #060913;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+  background: #1e293b;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #06b6d4;
+  background: #0284c7;
 }
 
-/* Glassmorphism Panel Styling */
+/* Structured Engineering Panel Styling */
+.eng-panel {
+  background-color: #090e1c;
+  border: 1px solid #162035;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
+}
+
+.eng-panel-elevated {
+  background-color: #0e152a;
+  border: 1px solid #212f4d;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+.eng-header {
+  border-bottom: 1px solid #162035;
+  padding: 10px 16px;
+  background-color: rgba(14, 21, 42, 0.5);
+}
+
+/* Structured Data Grid & Table */
+.eng-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.75rem;
+}
+
+.eng-table th {
+  background-color: #0c1224;
+  color: #64748b;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid #162035;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.eng-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(22, 32, 53, 0.6);
+  color: #cbd5e1;
+}
+
+.eng-table tr:hover {
+  background-color: rgba(18, 28, 54, 0.5);
+}
+
+/* Semantic Status Indicators */
+.eng-badge-success {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.eng-badge-warning {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.eng-badge-critical {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.eng-badge-info {
+  background-color: rgba(2, 132, 199, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+/* Backward compatibility fallback helper class */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.6);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.glass-panel-hover:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
-}
-
-/* Status Indicator Glows */
-.led-glow-emerald {
-  box-shadow: 0 0 12px #10b981;
-}
-.led-glow-amber {
-  box-shadow: 0 0 12px #f59e0b;
-}
-.led-glow-rose {
-  box-shadow: 0 0 16px #f43f5e;
-}
-.led-glow-cyan {
-  box-shadow: 0 0 12px #06b6d4;
-}
-
-/* Pulse Animation */
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-}
-
-.animate-radar {
-  animation: radar-pulse 3s infinite ease-in-out;
+  background-color: #090e1c;
+  border: 1px solid #162035;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
 }

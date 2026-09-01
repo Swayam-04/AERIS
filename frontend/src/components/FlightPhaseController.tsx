@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MissionPhase } from '../types/telemetry';
-import { Compass, CheckCircle2, Circle, Play, Pause, Sliders, Info, Zap, ShieldAlert, Clock, BarChart2 } from 'lucide-react';
+import { Compass, CheckCircle2, Circle, Sliders, Zap } from 'lucide-react';
 
 export interface FlightPhaseMetrics {
   startTime: string;
@@ -25,11 +25,11 @@ interface FlightPhaseControllerProps {
 
 export const ALL_PHASES: { id: MissionPhase; label: string; description: string }[] = [
   { id: 'takeoff', label: 'TAKEOFF', description: 'High power climbout, 95% throttle, 500 ft' },
-  { id: 'climb', label: 'CLIMB', description: 'Sustained climb to cruise altitude, 85% throttle, 6000 ft' },
+  { id: 'climb', label: 'CLIMB', description: 'Sustained climb to cruise altitude, 85% throttle, 6,000 ft' },
   { id: 'cruise', label: 'CRUISE', description: 'Nominal long-range endurance cruise, 72% throttle, 15,000 ft' },
   { id: 'loiter', label: 'LOITER', description: 'Station keeping & sensor surveillance, 55% throttle, 12,000 ft' },
-  { id: 'return', label: 'RETURN', description: 'Base transit return flight profile, 68% throttle, 8000 ft' },
-  { id: 'landing', label: 'LANDING', description: 'Approach descent & touchdown, 35% throttle, 1000 ft' },
+  { id: 'return', label: 'RETURN', description: 'Base transit return flight profile, 68% throttle, 8,000 ft' },
+  { id: 'landing', label: 'LANDING', description: 'Approach descent & touchdown, 35% throttle, 1,000 ft' },
 ];
 
 export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
@@ -43,7 +43,6 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
 }) => {
   const [selectedInspectPhase, setSelectedInspectPhase] = useState<MissionPhase | null>(null);
 
-  // Default phase metrics fallback
   const defaultMetrics: Record<string, FlightPhaseMetrics> = {
     takeoff: { startTime: '00:00:00', duration: '00:03:45', altitudeFt: 500, throttlePct: 95, healthStart: 100, healthEnd: 99.8, alertsCount: 0 },
     climb: { startTime: '00:03:45', duration: '00:14:20', altitudeFt: 6000, throttlePct: 85, healthStart: 99.8, healthEnd: 99.2, alertsCount: 0 },
@@ -54,11 +53,9 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
   };
 
   const activeMetricsMap = phaseMetrics || defaultMetrics;
-
   const currentPhaseIndex = ALL_PHASES.findIndex((p) => p.id.toLowerCase() === currentPhase?.toLowerCase());
 
   const handlePhaseClick = (phaseId: MissionPhase) => {
-    // If in AUTO mode, clicking a phase switches to MANUAL mode to allow inspection
     if (isAutoMode && onToggleAutoMode) {
       onToggleAutoMode(false);
     }
@@ -69,55 +66,52 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
   };
 
   return (
-    <div className="glass-panel p-3 rounded-xl border border-slate-800 space-y-3 font-mono text-xs select-none">
-      {/* Top Header Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-2.5">
+    <div className="eng-panel p-3 font-mono text-xs select-none">
+      {/* Top Header & Controller Mode Switch */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#162035] pb-2.5 mb-2.5">
         <div className="flex items-center gap-2">
-          <Compass className="w-4 h-4 text-cyan-400 animate-pulse" />
-          <span className="font-sans font-bold text-slate-100 uppercase tracking-wider text-xs">
-            FLIGHT PHASE STEPS & MISSION TIMELINE
+          <Compass className="w-4 h-4 text-[#38bdf8]" />
+          <span className="font-sans font-bold text-slate-200 text-xs tracking-wide">
+            MISSION FLIGHT PHASE TIMELINE
           </span>
           {isReplayMode && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
               REPLAY SYNCED
             </span>
           )}
         </div>
 
-        {/* Mode Toggle Switch (AUTO / SIMULATION vs MANUAL / INSPECTION) */}
         {onToggleAutoMode && !isReplayMode && (
-          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
+          <div className="flex items-center gap-1 bg-[#060913] p-1 rounded border border-[#162035] text-[11px]">
             <button
               onClick={() => onToggleAutoMode(true)}
-              className={`px-2.5 py-1 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 ${
                 isAutoMode
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                  ? 'bg-[#0284c7] text-white font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Simulation automatically advances through flight phases"
             >
-              <Zap size={12} />
+              <Zap size={11} />
               <span>AUTO SIMULATION</span>
             </button>
 
             <button
               onClick={() => onToggleAutoMode(false)}
-              className={`px-2.5 py-1 rounded font-bold transition flex items-center gap-1.5 ${
+              className={`px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 ${
                 !isAutoMode
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-amber-600 text-white font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Manual inspection mode allows selecting any phase"
             >
-              <Sliders size={12} />
-              <span>MANUAL INSPECTION</span>
+              <Sliders size={11} />
+              <span>MANUAL OVERRIDE</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Flight Phase Steps Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
+      {/* Structured Horizontal Flight Timeline */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 py-1">
         {ALL_PHASES.map((phaseObj, index) => {
           const isCompleted = currentPhaseIndex >= 0 && index < currentPhaseIndex;
           const isActive = currentPhaseIndex >= 0 && index === currentPhaseIndex;
@@ -127,73 +121,38 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
             <button
               key={phaseObj.id}
               onClick={() => handlePhaseClick(phaseObj.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2 whitespace-nowrap cursor-pointer border ${
+              className={`p-2.5 rounded border text-left transition flex flex-col justify-between ${
                 isActive
-                  ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30 border-cyan-300 ring-2 ring-cyan-400/40 scale-105 z-10'
+                  ? 'bg-[#0e1935] border-[#0284c7] text-slate-100 ring-1 ring-[#0284c7]'
                   : isCompleted
-                  ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/60'
-                  : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-[#091422] border-emerald-900/60 text-emerald-300 hover:bg-[#0c1b2f]'
+                  : 'bg-[#090e1c] border-[#162035] text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
-              title={`${phaseObj.label}: ${phaseObj.description} (Click to select & inspect)`}
             >
-              {isCompleted && <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />}
-              {isActive && <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping shrink-0" />}
-              {isUpcoming && <Circle size={14} className="text-slate-500 shrink-0" />}
-              
-              <span>{phaseObj.label}</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-slate-500 font-sans">0{index + 1}</span>
+                {isCompleted && <CheckCircle2 size={13} className="text-emerald-400" />}
+                {isActive && <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />}
+                {isUpcoming && <Circle size={13} className="text-slate-600" />}
+              </div>
+
+              <div className="font-bold text-xs tracking-wider">{phaseObj.label}</div>
+              <div className="text-[10px] text-slate-500 truncate mt-0.5">{phaseObj.description.split(',')[2] || ''}</div>
             </button>
           );
         })}
       </div>
 
-      {/* Phase Metrics Inspection HUD (Shown when clicking any phase or inspecting active phase) */}
+      {/* Phase Inspection Popover Card */}
       {selectedInspectPhase && (
-        <div className="mt-2 p-3 bg-slate-950/80 rounded-xl border border-cyan-500/30 text-xs font-mono space-y-2 animate-fadeIn">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-            <div className="flex items-center gap-2">
-              <BarChart2 className="w-4 h-4 text-cyan-400" />
-              <span className="font-bold text-slate-100 uppercase">
-                PHASE METRICS MATRIX: <strong className="text-cyan-400">{selectedInspectPhase.toUpperCase()}</strong>
-              </span>
-            </div>
-            <button
-              onClick={() => setSelectedInspectPhase(null)}
-              className="text-slate-500 hover:text-slate-300 font-bold px-1"
-            >
-              ✕
-            </button>
+        <div className="mt-2 p-3 bg-[#0e152a] rounded border border-[#212f4d] flex items-center justify-between text-xs">
+          <div>
+            <span className="text-[#38bdf8] font-bold uppercase">{selectedInspectPhase} PHASE DETAILS:</span>
+            <span className="text-slate-300 ml-2">
+              Altitude: {activeMetricsMap[selectedInspectPhase]?.altitudeFt} ft | Throttle: {activeMetricsMap[selectedInspectPhase]?.throttlePct}% | Duration: {activeMetricsMap[selectedInspectPhase]?.duration}
+            </span>
           </div>
-
-          {activeMetricsMap[selectedInspectPhase.toLowerCase()] && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] pt-1">
-              <div>
-                <span className="text-slate-500 block text-[10px]">START TIME / DURATION</span>
-                <span className="text-slate-200 font-bold">
-                  {activeMetricsMap[selectedInspectPhase.toLowerCase()].startTime} ({activeMetricsMap[selectedInspectPhase.toLowerCase()].duration})
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[10px]">OPERATING PROFILE</span>
-                <span className="text-cyan-400 font-bold">
-                  {activeMetricsMap[selectedInspectPhase.toLowerCase()].throttlePct}% Throttle @ {activeMetricsMap[selectedInspectPhase.toLowerCase()].altitudeFt} ft
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[10px]">HEALTH RANGE</span>
-                <span className="text-emerald-400 font-bold">
-                  {activeMetricsMap[selectedInspectPhase.toLowerCase()].healthStart}% → {activeMetricsMap[selectedInspectPhase.toLowerCase()].healthEnd}%
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[10px]">FAULTS / ALERTS</span>
-                <span className={activeMetricsMap[selectedInspectPhase.toLowerCase()].alertsCount > 0 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
-                  {activeMetricsMap[selectedInspectPhase.toLowerCase()].alertsCount > 0
-                    ? `⚠️ ${activeMetricsMap[selectedInspectPhase.toLowerCase()].alertsCount} Alert (${activeMetricsMap[selectedInspectPhase.toLowerCase()].primaryFault})`
-                    : '✓ Nominal (0 Alerts)'}
-                </span>
-              </div>
-            </div>
-          )}
+          <button onClick={() => setSelectedInspectPhase(null)} className="text-slate-400 hover:text-slate-200">✕</button>
         </div>
       )}
     </div>

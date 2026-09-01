@@ -504,7 +504,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const rightPropGroup = new THREE.Group();
     rightPropGroup.position.set(-1.85, -0.2, 1.8);
     rightPropRef.current = rightPropGroup;
-    uavRootGroup.add(rightPropGroup);
+    exteriorShellGroup.add(rightPropGroup);
 
     const rightHub = new THREE.Mesh(propHubGeo, metallicChromeMaterial);
     rightHub.rotation.z = -Math.PI / 2;
@@ -529,7 +529,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const leftPropGroup = new THREE.Group();
     leftPropGroup.position.set(-1.85, -0.2, -1.8);
     leftPropRef.current = leftPropGroup;
-    uavRootGroup.add(leftPropGroup);
+    exteriorShellGroup.add(leftPropGroup);
 
     const leftHub = new THREE.Mesh(propHubGeo, metallicChromeMaterial);
     leftHub.rotation.z = -Math.PI / 2;
@@ -555,7 +555,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const internalSystemsGroup = new THREE.Group();
     internalSystemsGroup.name = "internalSystems";
     internalSystemsRef.current = internalSystemsGroup;
-    uavRootGroup.add(internalSystemsGroup);
+    exteriorShellGroup.add(internalSystemsGroup);
 
     const metalEngineMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.9, roughness: 0.15 });
     const cylinderHeadMat = new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.8, roughness: 0.2, emissive: 0x06b6d4, emissiveIntensity: 0.2 });

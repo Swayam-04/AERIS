@@ -3,7 +3,7 @@ import os
 
 def create_tapas_bh201_gltf():
     """
-    Generate valid GLTF 2.0 asset for DRDO TAPAS-BH-201 (RUSTOM-II) MALE UAV.
+    Generate valid GLTF 2.0 asset for DRDO RUSTOM-II MALE UAV.
     Length: 9.5m, Wingspan: 20.6m (Scale 1:1)
     """
     output_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "public", "models")
@@ -13,18 +13,18 @@ def create_tapas_bh201_gltf():
     gltf = {
         "asset": {
             "version": "2.0",
-            "generator": "AERIS DRDO TAPAS-BH-201 GLTF Generator"
+            "generator": "AERIS DRDO RUSTOM-II GLTF Generator"
         },
         "scene": 0,
         "scenes": [
             {
-                "name": "TAPAS_BH_201_RUSTOM_II_Scene",
+                "name": "DRDO_RUSTOM_II_Scene",
                 "nodes": [0]
             }
         ],
         "nodes": [
             {
-                "name": "TAPAS_BH_201",
+                "name": "DRDO_RUSTOM_II",
                 "children": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             },
             {"name": "Fuselage", "translation": [0, 0, 0]},
@@ -72,7 +72,7 @@ def create_tapas_bh201_gltf():
     with open(gltf_path, "w", encoding="utf-8") as f:
         json.dump(gltf, f, indent=2)
 
-    print(f"Generated TAPAS-BH-201 / RUSTOM-II GLTF asset at: {gltf_path}")
+    print(f"Generated DRDO RUSTOM-II GLTF asset at: {gltf_path}")
 
 if __name__ == "__main__":
     create_tapas_bh201_gltf()

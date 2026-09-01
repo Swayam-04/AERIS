@@ -1,12 +1,12 @@
 {
   "asset": {
     "version": "2.0",
-    "generator": "AERIS DRDO TAPAS-BH-201 GLTF Generator"
+    "generator": "AERIS DRDO RUSTOM-II GLTF Generator"
   },
   "scene": 0,
   "scenes": [
     {
-      "name": "TAPAS_BH_201_RUSTOM_II_Scene",
+      "name": "DRDO_RUSTOM_II_Scene",
       "nodes": [
         0
       ]
@@ -14,7 +14,7 @@
   ],
   "nodes": [
     {
-      "name": "TAPAS_BH_201",
+      "name": "DRDO_RUSTOM_II",
       "children": [
         1,
         2,

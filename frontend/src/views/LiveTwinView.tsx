@@ -33,7 +33,7 @@ export const LiveTwinView: React.FC<LiveTwinViewProps> = ({ state, onSetPhase })
         <div>
           <h2 className="text-lg font-bold text-slate-100 font-sans tracking-wide flex items-center gap-2 uppercase">
             <Box className="w-5 h-5 text-[#38bdf8]" />
-            TAPAS-BH-201 / RUSTOM-II 3D Digital Twin Environment
+            DRDO RUSTOM-II 3D Digital Twin Environment
           </h2>
           <p className="text-xs text-slate-400">Aero Engine Reliability & Intelligence System | DRDO MALE UAV (9.5m / 20.6m Scale)</p>
         </div>

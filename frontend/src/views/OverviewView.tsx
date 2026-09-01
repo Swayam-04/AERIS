@@ -88,13 +88,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </h1>
           </div>
           <p className="text-xs text-slate-400 font-mono">
-            Aero Engine Reliability & Intelligence System | DRDO TAPAS-BH-201 (RUSTOM-II) MALE UAV
+            Aero Engine Reliability & Intelligence System | DRDO RUSTOM-II MALE UAV
           </p>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs">
           <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
-            AIRCRAFT: <strong className="text-[#38bdf8]">TAPAS-BH-201</strong>
+            AIRCRAFT: <strong className="text-[#38bdf8]">DRDO RUSTOM-II</strong>
           </div>
           <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
             PROPULSION: <strong className="text-emerald-400">ROTAX 914/915 iS CLASS</strong>

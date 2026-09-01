@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-[10px] text-slate-400 font-sans leading-tight">
                 Aero Engine Reliability & Intelligence System
               </p>
-              <p className="text-[9px] text-cyan-400 font-mono mt-0.5 font-semibold">DRDO TAPAS-BH-201 / RUSTOM-II</p>
+              <p className="text-[9px] text-cyan-400 font-mono mt-0.5 font-semibold">DRDO RUSTOM-II</p>
             </div>
             <span className="w-2 h-2 rounded-full bg-emerald-400 led-glow-emerald shrink-0" />
           </div>
@@ -421,7 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-bold text-slate-200 block">AERIS Platform Info</span>
                 <p className="text-slate-400">Aero Engine Reliability & Intelligence System</p>
                 <p className="text-slate-400">SIH Problem Statement ID: 26054</p>
-                <p className="text-slate-400">Digital Twin Target: DRDO TAPAS-BH-201 (RUSTOM-II) MALE UAV</p>
+                <p className="text-slate-400">Digital Twin Target: DRDO RUSTOM-II MALE UAV</p>
               </div>
             </div>
 

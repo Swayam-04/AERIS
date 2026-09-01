@@ -212,7 +212,7 @@ export const App: React.FC = () => {
         sidebarCollapsed ? 'md:pl-20' : 'md:pl-68'
       }`}>
         <div className="max-w-[1600px] mx-auto px-4 flex items-center justify-between font-mono">
-          <span>AERIS Engine Digital Twin — DRDO TAPAS-BH-201</span>
+          <span>AERIS Engine Digital Twin — DRDO RUSTOM-II</span>
           <span>AERIS Navigation Pattern + Aerospace Digital Twin Identity</span>
         </div>
       </footer>

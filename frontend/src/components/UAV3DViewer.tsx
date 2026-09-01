@@ -113,7 +113,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         healthPct: Math.round(state.engineHealth),
         status: state.engineStatus === 'critical' ? 'critical' : state.engineStatus === 'warning' ? 'warning' : 'healthy',
         modelStatus: state.cht > 210 || state.egt > 880 ? 'deviating' : 'expected',
-        description: '4-stroke 4-cylinder turbocharged aero-piston engine block powering DRDO TAPAS-BH-201 MALE UAV.',
+        description: '4-stroke 4-cylinder turbocharged aero-piston engine block powering DRDO RUSTOM-II MALE UAV.',
         telemetry: {
           'RPM': `${state.rpm} RPM`,
           'CHT': `${state.cht} °C`,
@@ -317,9 +317,9 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     grid.position.y = -3.5;
     scene.add(grid);
 
-    // 6. Root Group for TAPAS-BH-201 (Rustom-II)
+    // 6. Root Group for DRDO RUSTOM-II
     const uavRootGroup = new THREE.Group();
-    uavRootGroup.name = "TAPAS_BH_201";
+    uavRootGroup.name = "DRDO_RUSTOM_II";
     uavRootRef.current = uavRootGroup;
     scene.add(uavRootGroup);
 
@@ -928,7 +928,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
         <div className="flex items-center gap-2 bg-slate-950/85 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-md font-mono text-xs shadow-xl">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-slate-100 font-bold uppercase">DRDO TAPAS-BH-201 / RUSTOM-II</span>
+          <span className="text-slate-100 font-bold uppercase">DRDO RUSTOM-II</span>
           <span className="text-slate-500">|</span>
           <span className="text-slate-400 text-[10px]">3D Digital Twin</span>
           <span className="text-slate-500">|</span>
@@ -991,13 +991,13 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         </div>
       )}
 
-      {/* 2. BOTTOM LEFT: TAPAS DIGITAL TWIN OVERLAY HUD CARD */}
+      {/* 2. BOTTOM LEFT: RUSTOM DIGITAL TWIN OVERLAY HUD CARD */}
       {showOverlay && state && (
         <div className="absolute bottom-4 left-4 z-10 max-w-xs glass-panel p-3.5 rounded-xl border border-slate-700/70 bg-slate-950/90 backdrop-blur-xl text-xs space-y-2">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
               <Cpu className="text-cyan-400" size={16} />
-              <span className="font-semibold text-slate-200 uppercase tracking-wider">TAPAS Digital Twin</span>
+              <span className="font-semibold text-slate-200 uppercase tracking-wider">RUSTOM Digital Twin</span>
             </div>
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
               state.engineStatus === 'critical' ? 'bg-rose-500 text-slate-950' :

@@ -1,23 +1,24 @@
 # AERIS — Aero Engine Reliability & Intelligence System
 
-**AERIS** (Aero Engine Reliability & Intelligence System) is an advanced AI-enabled digital-twin web platform designed for real-time health monitoring, multivariate anomaly detection, explainable fault diagnosis, remaining useful life (RUL) estimation, and mission reliability enhancement of aero-piston engines powering the **DRDO RUSTOM-II** MALE UAV.
+**AERIS** (Aero Engine Reliability & Intelligence System) is an advanced AI-enabled digital-twin web platform designed for real-time health monitoring, multivariate anomaly detection, explainable fault diagnosis, remaining useful life (RUL) estimation, and mission reliability enhancement of aero-piston engines powering the **DRDO RUSTOM-1** MALE UAV.
 
 ---
 
-## 🛩️ DRDO RUSTOM-II Aircraft Identity
+## 🛩️ DRDO RUSTOM-1 Aircraft Identity & Specifications
 
-- **Aircraft Model:** DRDO RUSTOM-II
+- **Aircraft Model:** DRDO RUSTOM-1
+- **Type:** MALE UAV
 - **Manufacturer:** DRDO ADE (Aeronautical Development Establishment)
-- **Powerplant:** Rotax 914 / 915 iS class turbocharged 4-stroke aero-piston engines
-- **Wingspan:** 20.6 meters
-- **Length:** 9.5 meters
-- **Key Geometric Identifiers:**
-  - Bulbous SATCOM satellite communications nose radome.
-  - High shoulder-mounted straight reconnaissance wings with vertical winglets.
-  - Dual wing-mounted aero-piston engine nacelles with cooling louvers.
-  - High T-Tail assembly (tall vertical tail fin with top horizontal stabilizer).
-  - Chin-mounted electro-optical (EO/IR) FLIR sensor pod.
-  - Tactical light grey DRDO composite finish (`#cbd5e1`).
+- **Powerplant:** 1 × Lycoming O-320 (Four-cylinder, air-cooled, horizontally opposed engine)
+- **Engine Power:** 112 kW / 150 hp
+- **Capacity:** 95 kg
+- **Length:** 5.12 m
+- **Wingspan:** 7.9 m
+- **Height:** 2.4 m
+- **Empty Weight:** 720 kg
+- **Maximum Speed:** 150 km/h
+- **Endurance:** 12–15 hours
+- **Service Ceiling:** 7,900 m
 
 ---
 
@@ -26,7 +27,7 @@
 - **Aerospace Digital Twin Layout Navigation Pattern:** Compact STATUS-ONLY top bar + Fixed vertical LEFT sidebar navigation + Expanded center main content area.
 - **Physics-Informed Expected-State Baseline Model:** Derives nominal trajectories for 9 telemetry signals (RPM, CHT, EGT, Oil Pressure, Oil Temp, Fuel Flow, Vibration, Injection Timing, Battery Volts) dynamically based on throttle, altitude, ambient temp, and barometric lapse.
 - **Real-Time Vector Residuals & Mahalanobis Distance:** Computes residual deltas `Observed - Physics Expected` and multivariate statistical distances ($D_M$).
-- **Interactive DRDO RUSTOM-II 3D Digital Twin Viewer:** Built with Three.js — features `Exterior`, `Internal View`, `Cutaway Depth Slider` (0%-90%), `Exploded View`, `Engine Focus` camera animation, and 3D raycasting sensor inspection.
+- **Interactive DRDO RUSTOM-1 3D Digital Twin Viewer:** Built with Three.js — features `[ EXTERIOR ]` and `[ INTERIOR ]` view modes, Raycasting clickable component inspection, and `[ FOCUS CAMERA ]` camera controls.
 - **Conceptual Digital-Twin Visualization Disclaimer:** Clearly demarcated for non-classified conceptual internal health monitoring architecture.
 - **Explainable Diagnostic Fault Center:** Ranked physical evidence summaries for cylinder misfires, fuel injector abnormalities, oil pressure loss, thermal overheating, and crankcase vibration spikes.
 - **RUL & Degradation Model:** Physics-informed wear accumulation model tracking remaining flight hours against 1,200h TBO baseline with confidence bounds.

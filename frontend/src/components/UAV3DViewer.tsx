@@ -504,7 +504,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
         <div className="flex items-center gap-2 bg-[#0a0f1d] px-3 py-1 rounded border border-[#1a2438] font-mono text-xs shadow-md">
           <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-          <span className="text-slate-100 font-bold uppercase">DRDO RUSTOM-II</span>
+          <span className="text-slate-100 font-bold uppercase">RUSTOM-1 DIGITAL TWIN</span>
           <span className="text-slate-600">|</span>
           <span className="text-[#38bdf8] font-semibold uppercase">{viewMode} MODE</span>
         </div>
@@ -555,6 +555,17 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
 
           <p className="text-slate-300 text-[11px] leading-relaxed font-sans">{selectedComponent.description}</p>
 
+          {selectedComponent.details && (
+            <div className="p-2 bg-[#060810] rounded border border-[#1a2438] text-[11px] space-y-1 font-mono">
+              {Object.entries(selectedComponent.details).map(([key, val]) => (
+                <div key={key} className="flex justify-between border-b border-[#141c2e] pb-1 last:border-b-0">
+                  <span className="text-slate-500">{key}:</span>
+                  <span className="text-[#38bdf8] font-bold">{val}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="p-2 bg-[#060810] rounded border border-[#1a2438] text-[10px] text-slate-400">
             <span className="text-slate-500 font-bold block uppercase mb-0.5">SOURCE:</span>
             <span className={selectedComponent.source.includes('CONCEPTUAL') ? 'text-amber-400 font-semibold' : 'text-slate-300'}>
@@ -586,7 +597,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         <button
           onClick={handleFitToView}
           className="px-2.5 py-1 rounded hover:bg-[#101728] text-slate-300 hover:text-slate-100 flex items-center gap-1 transition"
-          title="Fit camera bounds to Rustom-II aircraft"
+          title="Fit camera bounds to Rustom-1 aircraft"
         >
           <Box size={13} className="text-[#38bdf8]" />
           <span>Fit View</span>

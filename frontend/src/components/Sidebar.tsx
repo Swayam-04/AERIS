@@ -62,6 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     analytics: true
   });
 
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   const toggleSection = (sectionKey: string) => {
     setOpenSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
   };

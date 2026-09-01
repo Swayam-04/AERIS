@@ -245,14 +245,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="p-2.5 rounded bg-[#090e1c] border border-[#162035] space-y-1 text-[11px]">
             <div className="flex justify-between">
               <span className="text-slate-400">ACTIVE FAULT STATUS:</span>
-              <span className={`font-bold ${state.active_fault !== 'None' ? 'text-rose-400' : 'text-emerald-400'}`}>
+              <span className={`font-bold ${state.active_fault !== 'none' ? 'text-rose-400' : 'text-emerald-400'}`}>
                 {state.active_fault.toUpperCase()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">PHYSICS RESIDUAL DELTA:</span>
               <span className="text-slate-200">
-                EGT: <strong className="text-[#38bdf8]">{state.residuals.egt_delta > 0 ? `+${state.residuals.egt_delta.toFixed(1)}` : state.residuals.egt_delta.toFixed(1)} °C</strong>
+                EGT: <strong className="text-[#38bdf8]">{state.residuals.egt_c > 0 ? `+${state.residuals.egt_c.toFixed(1)}` : state.residuals.egt_c.toFixed(1)} °C</strong>
               </span>
             </div>
           </div>
@@ -289,7 +289,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <tbody>
               {state.alerts.map((alert, idx) => (
                 <tr key={idx}>
-                  <td className="text-slate-400">{alert.timestamp}</td>
+                  <td className="text-slate-400">{Math.floor(alert.timestamp)}s</td>
                   <td>
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                       alert.severity === 'critical' ? 'eng-badge-critical' : 'eng-badge-warning'
@@ -298,9 +298,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     </span>
                   </td>
                   <td className="font-bold text-slate-200">{alert.candidate_fault}</td>
-                  <td className="text-slate-300">{alert.evidence[0] || 'Residual variance'}</td>
+                  <td className="text-slate-300">{alert.evidence_summary}</td>
                   <td className="text-[#38bdf8] font-bold">{Math.round(alert.confidence_pct)}%</td>
-                  <td className="text-slate-400">{alert.action_required}</td>
+                  <td className="text-slate-400">{alert.recommendation}</td>
                 </tr>
               ))}
             </tbody>

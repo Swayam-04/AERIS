@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { DigitalTwinState, AlertItem } from '../types/telemetry';
-import { ShieldAlert, AlertTriangle, CheckCircle2, ArrowRight, Info } from 'lucide-react';
+import { DigitalTwinState, DiagnosticAlert } from '../types/telemetry';
+import { ShieldAlert, CheckCircle2, Info } from 'lucide-react';
 
 interface FaultCenterViewProps {
   state: DigitalTwinState | null;
@@ -8,7 +8,7 @@ interface FaultCenterViewProps {
 }
 
 export const FaultCenterView: React.FC<FaultCenterViewProps> = ({ state, onNavigateToControl }) => {
-  const [selectedAlert, setSelectedAlert] = useState<AlertItem | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<DiagnosticAlert | null>(null);
 
   if (!state) return null;
 
@@ -75,7 +75,7 @@ export const FaultCenterView: React.FC<FaultCenterViewProps> = ({ state, onNavig
                       onClick={() => setSelectedAlert(alert)}
                       className={`cursor-pointer transition ${isSelected ? 'bg-[#0e1935] border-l-2 border-l-[#0284c7]' : ''}`}
                     >
-                      <td className="text-slate-400">{alert.timestamp}</td>
+                      <td className="text-slate-400">{Math.floor(alert.timestamp)}s</td>
                       <td>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                           alert.severity === 'critical' ? 'eng-badge-critical' : 'eng-badge-warning'
@@ -118,7 +118,7 @@ export const FaultCenterView: React.FC<FaultCenterViewProps> = ({ state, onNavig
                 <div className="p-2.5 bg-[#0c1224] rounded border border-[#162035] space-y-1">
                   <span className="text-[10px] text-slate-500 font-sans font-bold uppercase">CONTRIBUTING SIGNAL VECTOR</span>
                   <div className="flex flex-wrap gap-1 pt-1">
-                    {currentSelected.contributing_signals.map((sig) => (
+                    {currentSelected.contributing_signals.map((sig: string) => (
                       <span key={sig} className="px-2 py-0.5 rounded bg-[#162035] text-[#38bdf8] text-[11px]">
                         {sig}
                       </span>

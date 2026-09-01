@@ -103,7 +103,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ state, history }) => {
             </div>
             <div className="flex justify-between py-1 border-b border-[#162035]">
               <span className="text-slate-400">Active Fault State:</span>
-              <span className={`font-bold ${state.active_fault !== 'None' ? 'text-rose-400' : 'text-emerald-400'}`}>
+              <span className={`font-bold ${state.active_fault !== 'none' ? 'text-rose-400' : 'text-emerald-400'}`}>
                 {state.active_fault.toUpperCase()}
               </span>
             </div>

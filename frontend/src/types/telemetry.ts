@@ -96,10 +96,17 @@ export interface UAV3DState {
   missionPhase: string;
   activeFault: string;
   activeAlert: string;
+  faultSeverity?: number;
   rpm: number;
   cht: number;
   egt: number;
   oilPressure: number;
   vibration: number;
   residualDistance: number;
+  expectedRpm?: number;
+  expectedCht?: number;
+  expectedEgt?: number;
+  expectedOilPressure?: number;
+  expectedVibration?: number;
+  rulHours?: number;
 }

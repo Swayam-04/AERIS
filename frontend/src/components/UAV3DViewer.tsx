@@ -430,6 +430,31 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     return () => clearInterval(interval);
   }, [selectedComponent]);
 
+  // Auto-Focus Camera & Highlight Component when Fault Scenario is Triggered
+  useEffect(() => {
+    if (!state || !state.activeFault || state.activeFault === 'none') return;
+
+    let targetComp: UAVComponentInfo | null = null;
+    const f = state.activeFault.toLowerCase();
+
+    if (f.includes('misfire') || f.includes('overheating')) {
+      targetComp = viewMode === 'interior' ? UAV_COMPONENT_CATALOG.engineBlock : UAV_COMPONENT_CATALOG.engine;
+    } else if (f.includes('injector')) {
+      targetComp = viewMode === 'interior' ? UAV_COMPONENT_CATALOG.fuelSystem : UAV_COMPONENT_CATALOG.engine;
+    } else if (f.includes('oil')) {
+      targetComp = viewMode === 'interior' ? UAV_COMPONENT_CATALOG.oilSystem : UAV_COMPONENT_CATALOG.engine;
+    } else if (f.includes('vibration')) {
+      targetComp = UAV_COMPONENT_CATALOG.propeller;
+    } else if (f.includes('sensor')) {
+      targetComp = UAV_COMPONENT_CATALOG.sensors;
+    }
+
+    if (targetComp) {
+      setSelectedComponent(targetComp);
+      handleFocusComponent(targetComp);
+    }
+  }, [state?.activeFault, state?.faultSeverity]);
+
   // Update Material Opacity based on View Mode (Exterior vs Interior vs Cutaway)
   useEffect(() => {
     const targetGroup = isCustomModelLoaded ? customModelSceneRef.current : exteriorShellRef.current;
@@ -713,6 +738,42 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
                   <span className="text-[#38bdf8] font-bold">{val}</span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {state && state.activeFault && state.activeFault !== 'none' && (
+            <div className="p-2.5 bg-[#060810] rounded border border-rose-500/40 text-[11px] space-y-1 font-mono">
+              <span className="text-rose-400 font-bold uppercase text-[10px] block border-b border-rose-500/20 pb-1">
+                ACTIVE FAULT EVIDENCE SUMMARY
+              </span>
+              <div className="flex justify-between">
+                <span className="text-slate-500">FAULTS TYPE:</span>
+                <span className="text-rose-400 font-bold uppercase">{state.activeFault.replace('_', ' ')}</span>
+              </div>
+              {state.faultSeverity && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">SEVERITY:</span>
+                  <span className="text-amber-400 font-bold">{(state.faultSeverity * 100).toFixed(0)}%</span>
+                </div>
+              )}
+              {state.expectedEgt && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">OBSERVED EGT:</span>
+                  <span className="text-slate-200">{state.egt}°C <span className="text-slate-500">(Exp: {state.expectedEgt}°C)</span></span>
+                </div>
+              )}
+              {state.expectedCht && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">OBSERVED CHT:</span>
+                  <span className="text-slate-200">{state.cht}°C <span className="text-slate-500">(Exp: {state.expectedCht}°C)</span></span>
+                </div>
+              )}
+              {state.rulHours !== undefined && (
+                <div className="flex justify-between pt-1 border-t border-[#162035]">
+                  <span className="text-slate-500">RUL ESTIMATE:</span>
+                  <span className="text-emerald-400 font-bold">{state.rulHours} Hours</span>
+                </div>
+              )}
             </div>
           )}
 

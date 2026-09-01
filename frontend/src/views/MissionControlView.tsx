@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { DigitalTwinState, FaultType, MissionPhase } from '../types/telemetry';
+import { DigitalTwinState, FaultType, MissionPhase, UAV3DState } from '../types/telemetry';
 import { FlightPhaseController } from '../components/FlightPhaseController';
-import { Sliders, RotateCcw, ShieldAlert } from 'lucide-react';
+import { UAV3DViewer } from '../components/UAV3DViewer';
+import { Sliders, RotateCcw, ShieldAlert, Activity, CheckCircle2, AlertTriangle, Box } from 'lucide-react';
 
 interface MissionControlViewProps {
   state: DigitalTwinState | null;
@@ -23,6 +24,27 @@ export const MissionControlView: React.FC<MissionControlViewProps> = ({
 
   if (!state) return null;
 
+  const uav3dState: UAV3DState = {
+    engineHealth: state.overall_health_score,
+    engineStatus: state.status,
+    missionPhase: state.mission_phase,
+    activeFault: state.active_fault,
+    activeAlert: state.alerts[0]?.candidate_fault || 'None',
+    faultSeverity: state.fault_severity || severity,
+    rpm: state.observed.rpm,
+    cht: state.observed.cht_c,
+    egt: state.observed.egt_c,
+    oilPressure: state.observed.oil_pressure_psi,
+    vibration: state.observed.vibration_g,
+    residualDistance: state.residuals.mahalanobis_distance,
+    expectedRpm: state.expected.rpm,
+    expectedCht: state.expected.cht_c,
+    expectedEgt: state.expected.egt_c,
+    expectedOilPressure: state.expected.oil_pressure_psi,
+    expectedVibration: state.expected.vibration_g,
+    rulHours: state.rul ? Math.round(state.rul.rul_hours) : undefined
+  };
+
   const faultOptions = [
     { type: 'misfire' as FaultType, label: 'Cylinder Misfire', desc: 'Ignition coil failure causing RPM drop & high vibration' },
     { type: 'injector_abnormality' as FaultType, label: 'Fuel Injector Restriction', desc: 'Lean fuel mixture causing elevated EGT & CHT rise' },
@@ -41,7 +63,7 @@ export const MissionControlView: React.FC<MissionControlViewProps> = ({
             <Sliders className="w-5 h-5 text-[#38bdf8]" />
             Mission Control & Fault Injection Console
           </h2>
-          <p className="text-xs text-slate-400">Interactive flight profile switcher and controlled fault scenario trigger</p>
+          <p className="text-xs text-slate-400">Interactive flight profile switcher and controlled fault scenario trigger with live RUSTOM 3D Digital Twin</p>
         </div>
         <button
           onClick={onResetMission}
@@ -56,6 +78,83 @@ export const MissionControlView: React.FC<MissionControlViewProps> = ({
         currentPhase={state.mission_phase}
         onSetPhase={onSetPhase}
       />
+
+      {/* Live RUSTOM 3D Viewport & Scenario Result Summary Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 3D Viewport Panel */}
+        <div className="lg:col-span-2 h-[460px]">
+          <UAV3DViewer state={uav3dState} height="h-full" showOverlay={true} />
+        </div>
+
+        {/* Real-time Scenario Result Summary Card */}
+        <div className="eng-panel p-4 flex flex-col justify-between space-y-3">
+          <div>
+            <div className="border-b border-[#162035] pb-2 font-sans flex items-center justify-between">
+              <span className="font-bold text-xs uppercase text-slate-200 tracking-wide flex items-center gap-2">
+                <Box size={14} className="text-[#38bdf8]" />
+                SCENARIO DIGITAL TWIN OUTCOME
+              </span>
+              <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
+                state.status === 'critical' ? 'eng-badge-critical' : state.status === 'warning' ? 'eng-badge-warning' : 'eng-badge-success'
+              }`}>
+                {state.status}
+              </span>
+            </div>
+
+            <div className="space-y-2 mt-3 text-xs text-slate-300">
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">ACTIVE SCENARIO:</span>
+                <span className="font-bold text-slate-100 uppercase">{state.active_fault.replace('_', ' ')}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">SEVERITY FACTOR:</span>
+                <span className="font-bold text-[#38bdf8]">{(severity * 100).toFixed(0)}%</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">MISSION PHASE:</span>
+                <span className="font-bold text-slate-100 uppercase">{state.mission_phase}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">ENGINE HEALTH SCORE:</span>
+                <span className={`font-bold ${state.overall_health_score > 80 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {state.overall_health_score}%
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">OBSERVED VS EXP CHT:</span>
+                <span className="text-slate-200">{state.observed.cht_c}°C <span className="text-slate-500">({state.expected.cht_c}°C)</span></span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">OBSERVED VS EXP EGT:</span>
+                <span className="text-slate-200">{state.observed.egt_c}°C <span className="text-slate-500">({state.expected.egt_c}°C)</span></span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#162035]">
+                <span className="text-slate-500">VIBRATION RMS:</span>
+                <span className="text-slate-200">{state.observed.vibration_g} g</span>
+              </div>
+              {state.rul && (
+                <div className="flex justify-between py-1 pt-2 border-t border-[#162035]">
+                  <span className="text-slate-400 font-bold">REMAINING USEFUL LIFE:</span>
+                  <span className="text-emerald-400 font-bold">{Math.round(state.rul.rul_hours)} Hours</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-2.5 bg-[#060810] rounded border border-[#162035] text-[10px] text-slate-400">
+            <span className="text-slate-300 font-bold block uppercase mb-0.5">3D DIGITAL TWIN STATUS:</span>
+            {state.active_fault === 'none' ? (
+              <span className="text-emerald-400 flex items-center gap-1 font-semibold">
+                <CheckCircle2 size={12} /> RUSTOM digital twin operating nominal
+              </span>
+            ) : (
+              <span className="text-amber-400 flex items-center gap-1 font-semibold">
+                <AlertTriangle size={12} /> Digital twin active fault effect: {state.active_fault.replace('_', ' ')}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Fault Injection Panel */}
       <div className="eng-panel p-4 space-y-4">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FaultType, DigitalTwinState } from '../types/telemetry';
-import { GitCompare, Play } from 'lucide-react';
+import { FaultType, DigitalTwinState, UAV3DState } from '../types/telemetry';
+import { UAV3DViewer } from '../components/UAV3DViewer';
+import { GitCompare, Play, Box, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 
 export const WhatIfLabView: React.FC = () => {
@@ -50,6 +51,33 @@ export const WhatIfLabView: React.FC = () => {
       })
     : [];
 
+  const latestDegraded = simulationData && simulationData.degraded.length > 0
+    ? simulationData.degraded[simulationData.degraded.length - 1]
+    : null;
+
+  const uav3dState: UAV3DState | null = latestDegraded
+    ? {
+        engineHealth: latestDegraded.overall_health_score,
+        engineStatus: latestDegraded.status,
+        missionPhase: latestDegraded.mission_phase,
+        activeFault: faultType,
+        activeAlert: latestDegraded.alerts[0]?.candidate_fault || 'What-If Simulation Active',
+        faultSeverity: severity,
+        rpm: latestDegraded.observed.rpm,
+        cht: latestDegraded.observed.cht_c,
+        egt: latestDegraded.observed.egt_c,
+        oilPressure: latestDegraded.observed.oil_pressure_psi,
+        vibration: latestDegraded.observed.vibration_g,
+        residualDistance: latestDegraded.residuals.mahalanobis_distance,
+        expectedRpm: latestDegraded.expected.rpm,
+        expectedCht: latestDegraded.expected.cht_c,
+        expectedEgt: latestDegraded.expected.egt_c,
+        expectedOilPressure: latestDegraded.expected.oil_pressure_psi,
+        expectedVibration: latestDegraded.expected.vibration_g,
+        rulHours: latestDegraded.rul ? Math.round(latestDegraded.rul.rul_hours) : undefined
+      }
+    : null;
+
   return (
     <div className="space-y-4 font-mono text-xs select-none">
       {/* Title */}
@@ -59,7 +87,7 @@ export const WhatIfLabView: React.FC = () => {
             <GitCompare className="w-5 h-5 text-[#38bdf8]" />
             What-If Comparative Experiment Sandbox
           </h2>
-          <p className="text-xs text-slate-400">Isolated sandbox: Nominal Baseline Flight vs Degraded Fault Profile Delta Analysis</p>
+          <p className="text-xs text-slate-400">Isolated sandbox: Nominal Baseline Flight vs Degraded Fault Profile Delta Analysis with live RUSTOM 3D Digital Twin</p>
         </div>
       </div>
 
@@ -75,13 +103,14 @@ export const WhatIfLabView: React.FC = () => {
             <select
               value={faultType}
               onChange={(e) => setFaultType(e.target.value as FaultType)}
-              className="w-full bg-[#0c1224] border border-[#162035] text-slate-200 text-xs rounded p-2 focus:border-[#0284c7] outline-none"
+              className="w-full bg-[#0c1224] border border-[#162035] text-slate-200 text-xs rounded p-2 focus:border-[#0284c7] outline-none font-mono"
             >
               <option value="misfire">Cylinder Misfire</option>
               <option value="injector_abnormality">Injector Restriction / Lean</option>
               <option value="oil_pressure_loss">Oil Pressure Loss</option>
               <option value="overheating">Thermal Overheating</option>
               <option value="vibration_spike">Vibration Spike</option>
+              <option value="sensor_drift">Sensor Reading Drift</option>
             </select>
           </div>
 
@@ -119,6 +148,61 @@ export const WhatIfLabView: React.FC = () => {
           <Play size={14} /> {loading ? 'RUNNING COMPARATIVE SIMULATION...' : 'EXECUTE WHAT-IF SIMULATION'}
         </button>
       </div>
+
+      {/* RUSTOM 3D Digital Twin Simulation Viewport & Outcome Summary */}
+      {uav3dState && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 h-[420px]">
+            <UAV3DViewer state={uav3dState} height="h-full" showOverlay={true} />
+          </div>
+
+          <div className="eng-panel p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="border-b border-[#162035] pb-2 font-sans flex items-center justify-between">
+                <span className="font-bold text-xs uppercase text-slate-200 tracking-wide flex items-center gap-2">
+                  <Box size={14} className="text-[#38bdf8]" />
+                  WHAT-IF SIMULATION OUTCOME
+                </span>
+                <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-500/50 font-bold text-[10px] uppercase">
+                  SIMULATED DEGRADED
+                </span>
+              </div>
+
+              <div className="space-y-2 mt-3 text-xs text-slate-300">
+                <div className="flex justify-between py-1 border-b border-[#162035]">
+                  <span className="text-slate-500">SCENARIO:</span>
+                  <span className="font-bold text-slate-100 uppercase">{faultType.replace('_', ' ')}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#162035]">
+                  <span className="text-slate-500">SEVERITY:</span>
+                  <span className="font-bold text-[#38bdf8]">{(severity * 100).toFixed(0)}%</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#162035]">
+                  <span className="text-slate-500">INJECTION OFFSET:</span>
+                  <span className="font-bold text-slate-100">{faultStartSec} seconds</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#162035]">
+                  <span className="text-slate-500">HEALTH DEGRADATION:</span>
+                  <span className="font-bold text-rose-400">{uav3dState.engineHealth}%</span>
+                </div>
+                {uav3dState.rulHours !== undefined && (
+                  <div className="flex justify-between py-1 border-b border-[#162035]">
+                    <span className="text-slate-500">RUL IMPACT:</span>
+                    <span className="font-bold text-emerald-400">{uav3dState.rulHours} Hours</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-2.5 bg-[#060810] rounded border border-[#162035] text-[10px] text-slate-400">
+              <span className="text-slate-300 font-bold block uppercase mb-0.5">SIMULATION INTERACTION:</span>
+              <span className="text-amber-400 flex items-center gap-1 font-semibold">
+                <AlertTriangle size={12} /> Inspect affected component in RUSTOM 3D viewer
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results Comparison Chart */}
       {simulationData && (

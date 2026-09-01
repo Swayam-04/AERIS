@@ -11,10 +11,7 @@ import {
   Minimize2,
   Info,
   Box,
-  Layers,
   RotateCcw,
-  CheckCircle2,
-  AlertTriangle,
   X
 } from 'lucide-react';
 
@@ -44,17 +41,17 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   const uavRootRef = useRef<THREE.Group | null>(null);
   const exteriorShellRef = useRef<THREE.Group | null>(null);
   const customModelSceneRef = useRef<THREE.Group | null>(null);
-  const engineNodeRef = useRef<THREE.Object3D | null>(null);
 
   // Interaction State
   const [viewMode, setViewMode] = useState<ViewMode>('exterior');
   const [cutawayOpacity, setCutawayOpacity] = useState<number>(0.25);
   const [selectedComponent, setSelectedComponent] = useState<UAVComponentInfo | null>(null);
   const [hoveredNodeName, setHoveredNodeName] = useState<string | null>(null);
+  const [mouseScreenPos, setMouseScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isCustomModelLoaded, setIsCustomModelLoaded] = useState(false);
 
-  // Dragging Flag (prevents snapping while user orbits/pans)
+  // Dragging Flag (prevents camera snapping while user orbits/pans)
   const isUserInteracting = useRef<boolean>(false);
 
   // Target Camera Interpolation Vectors
@@ -63,23 +60,29 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
 
   // Raycasting & Material Hover Cache
   const hoveredMaterialCache = useRef<{ mesh: THREE.Mesh; origEmissive: THREE.Color } | null>(null);
+  const selectedMaterialCache = useRef<{ mesh: THREE.Mesh; origEmissive: THREE.Color } | null>(null);
 
-  // 1. Map Mesh/Node Name or Object Position to Catalog Component
+  // Map Mesh/Node Name or Object Position to Catalog Component
   const mapMeshToComponent = (object: THREE.Object3D): UAVComponentInfo | null => {
     let curr: THREE.Object3D | null = object;
     
     // Search up parent chain for named node match
     while (curr && curr !== uavRootRef.current) {
       const name = curr.name.toLowerCase();
+      if (name.includes('aileron') && name.includes('right')) return UAV_COMPONENT_CATALOG.aileronRight;
+      if (name.includes('aileron') && name.includes('left')) return UAV_COMPONENT_CATALOG.aileronLeft;
+      if (name.includes('rudder')) return UAV_COMPONENT_CATALOG.rudder;
+      if (name.includes('elevator')) return UAV_COMPONENT_CATALOG.elevator;
+      if (name.includes('cowling') || name.includes('nacelle')) return UAV_COMPONENT_CATALOG.engineCowling;
+      if (name.includes('propeller') || name.includes('blade') || name.includes('hub') || name.includes('prop')) return UAV_COMPONENT_CATALOG.propeller;
+      if (name.includes('engine') || name.includes('lycoming') || name.includes('rotax')) return UAV_COMPONENT_CATALOG.engine;
       if (name.includes('wing') && name.includes('right')) return UAV_COMPONENT_CATALOG.wingRight;
       if (name.includes('wing') && name.includes('left')) return UAV_COMPONENT_CATALOG.wingLeft;
       if (name.includes('wing')) return UAV_COMPONENT_CATALOG.wingRight;
-      if (name.includes('propeller') || name.includes('prop') || name.includes('blade')) return UAV_COMPONENT_CATALOG.propeller;
-      if (name.includes('engine') || name.includes('nacelle') || name.includes('rotax')) return UAV_COMPONENT_CATALOG.engine;
-      if (name.includes('satcom') || name.includes('radome') || name.includes('nose')) return UAV_COMPONENT_CATALOG.noseRadome;
-      if (name.includes('vertical_tail') || name.includes('fin')) return UAV_COMPONENT_CATALOG.verticalTail;
-      if (name.includes('horizontal_tail') || name.includes('stabilizer')) return UAV_COMPONENT_CATALOG.horizontalTail;
-      if (name.includes('tail')) return UAV_COMPONENT_CATALOG.verticalTail;
+      if (name.includes('nose') || name.includes('radome') || name.includes('satcom')) return UAV_COMPONENT_CATALOG.nose;
+      if (name.includes('vertical_tail') || name.includes('fin')) return UAV_COMPONENT_CATALOG.verticalStabilizer;
+      if (name.includes('horizontal_tail') || name.includes('stabilizer')) return UAV_COMPONENT_CATALOG.horizontalStabilizer;
+      if (name.includes('tail')) return UAV_COMPONENT_CATALOG.verticalStabilizer;
       if (name.includes('gear') || name.includes('wheel')) return UAV_COMPONENT_CATALOG.landingGear;
       if (name.includes('antenna') || name.includes('sensor')) return UAV_COMPONENT_CATALOG.antennas;
       if (name.includes('fuselage') || name.includes('body')) return UAV_COMPONENT_CATALOG.fuselage;
@@ -93,20 +96,21 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       curr = curr.parent;
     }
 
-    // Default fallback mapping based on world position
+    // Position-based fallback mapping
     const worldPos = new THREE.Vector3();
     object.getWorldPosition(worldPos);
 
-    if (worldPos.x > 3.0) return UAV_COMPONENT_CATALOG.noseRadome;
-    if (worldPos.x < -3.5 && worldPos.y > 1.2) return UAV_COMPONENT_CATALOG.horizontalTail;
-    if (worldPos.x < -3.5) return UAV_COMPONENT_CATALOG.verticalTail;
-    if (Math.abs(worldPos.z) > 2.5) return worldPos.z > 0 ? UAV_COMPONENT_CATALOG.wingRight : UAV_COMPONENT_CATALOG.wingLeft;
-    if (Math.abs(worldPos.z) > 1.2 && worldPos.x < 0) return UAV_COMPONENT_CATALOG.engine;
+    if (worldPos.x > 2.0) return UAV_COMPONENT_CATALOG.nose;
+    if (worldPos.x < -2.2 && worldPos.y > 1.4) return UAV_COMPONENT_CATALOG.horizontalStabilizer;
+    if (worldPos.x < -2.2 && worldPos.y > 0.8) return UAV_COMPONENT_CATALOG.verticalStabilizer;
+    if (Math.abs(worldPos.z) > 2.2) return worldPos.z > 0 ? UAV_COMPONENT_CATALOG.wingRight : UAV_COMPONENT_CATALOG.wingLeft;
+    if (worldPos.x < -0.2 && Math.abs(worldPos.z) < 1.0) return UAV_COMPONENT_CATALOG.engine;
+    if (worldPos.y < -0.4) return UAV_COMPONENT_CATALOG.landingGear;
 
     return UAV_COMPONENT_CATALOG.fuselage;
   };
 
-  // 2. Initialize Three.js Viewport
+  // Initialize Three.js Viewport
   useEffect(() => {
     if (!mountRef.current) return;
     const container = mountRef.current;
@@ -187,9 +191,9 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     grid.position.y = -3.5;
     scene.add(grid);
 
-    // Root Group for DRDO RUSTOM-II
+    // Root Group for DRDO RUSTOM-1
     const uavRootGroup = new THREE.Group();
-    uavRootGroup.name = "DRDO_RUSTOM_II";
+    uavRootGroup.name = "DRDO_RUSTOM_1";
     uavRootRef.current = uavRootGroup;
     scene.add(uavRootGroup);
 
@@ -205,20 +209,12 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const gltfLoader = new GLTFLoader();
     gltfLoader.setDRACOLoader(dracoLoader);
 
-    // Load actual Sketchfab DRDO Rustom 2 model asset
+    // Load actual Sketchfab Rustom model asset
     gltfLoader.load(
       '/models/drdo_rustom_2_uav.glb',
       (gltf) => {
         if (gltf && gltf.scene) {
           customModelSceneRef.current = gltf.scene;
-
-          // Traverse GLTF scene to find engine nodes
-          gltf.scene.traverse((child) => {
-            const nameLower = child.name.toLowerCase();
-            if (nameLower.includes('engine') || nameLower.includes('nacelle') || nameLower.includes('rotax')) {
-              engineNodeRef.current = child;
-            }
-          });
 
           // Hide procedural fallback elements and add loaded GLTF asset
           exteriorShellGroup.visible = false;
@@ -244,6 +240,8 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
+    let pointerDownPos = { x: 0, y: 0 };
+
     const handlePointerMove = (event: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -259,6 +257,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         const matchedComp = mapMeshToComponent(hitMesh);
         if (matchedComp) {
           setHoveredNodeName(matchedComp.name);
+          setMouseScreenPos({ x: event.clientX - rect.left, y: event.clientY - rect.top });
         }
 
         // Apply subtle hover highlight
@@ -281,6 +280,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       } else {
         renderer.domElement.style.cursor = 'default';
         setHoveredNodeName(null);
+        setMouseScreenPos(null);
         if (hoveredMaterialCache.current) {
           if ('emissive' in hoveredMaterialCache.current.mesh.material) {
             (hoveredMaterialCache.current.mesh.material as any).emissive.copy(hoveredMaterialCache.current.origEmissive);
@@ -291,8 +291,18 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     };
 
     const handlePointerDown = (event: MouseEvent) => {
-      // Ignore right-click pan or middle click
       if (event.button !== 0) return;
+      pointerDownPos = { x: event.clientX, y: event.clientY };
+    };
+
+    const handlePointerUp = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+
+      // Calculate pixel distance moved during pointer hold
+      const dx = event.clientX - pointerDownPos.x;
+      const dy = event.clientY - pointerDownPos.y;
+      // Ignore if user dragged to rotate/pan (drag threshold > 5px)
+      if (Math.hypot(dx, dy) > 5) return;
 
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -306,12 +316,36 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         const comp = mapMeshToComponent(hitMesh);
         if (comp) {
           setSelectedComponent(comp);
+
+          // Apply selected mesh highlight
+          if (hitMesh instanceof THREE.Mesh && hitMesh.material && 'emissive' in hitMesh.material) {
+            if (selectedMaterialCache.current && selectedMaterialCache.current.mesh !== hitMesh) {
+              if ('emissive' in selectedMaterialCache.current.mesh.material) {
+                (selectedMaterialCache.current.mesh.material as any).emissive.copy(selectedMaterialCache.current.origEmissive);
+              }
+            }
+            selectedMaterialCache.current = {
+              mesh: hitMesh,
+              origEmissive: (hitMesh.material as THREE.MeshStandardMaterial).emissive.clone()
+            };
+            (hitMesh.material as THREE.MeshStandardMaterial).emissive.setHex(0x0284c7);
+          }
+        }
+      } else {
+        // Clicked empty space -> deselect current component
+        setSelectedComponent(null);
+        if (selectedMaterialCache.current) {
+          if ('emissive' in selectedMaterialCache.current.mesh.material) {
+            (selectedMaterialCache.current.mesh.material as any).emissive.copy(selectedMaterialCache.current.origEmissive);
+          }
+          selectedMaterialCache.current = null;
         }
       }
     };
 
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
 
     // Animation & Render Loop
     let animationFrameId: number;
@@ -352,6 +386,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       cancelAnimationFrame(animationFrameId);
       if (container && renderer.domElement) {
         container.removeChild(renderer.domElement);
@@ -413,7 +448,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     if (controlsRef.current) {
       controlsRef.current.target.set(pos[0], pos[1], pos[2]);
     }
-    targetCamPos.current.set(pos[0] - 3.5, pos[1] + 1.8, pos[2] + 2.5);
+    targetCamPos.current.set(pos[0] - 3.2, pos[1] + 1.6, pos[2] + 2.2);
   };
 
   // Reset Camera View
@@ -447,7 +482,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       {/* Three.js Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* 1. TOP VIEW SWITCH BUTTONS ([ EXTERIOR ] [ INTERIOR ]) */}
+      {/* TOP VIEW SWITCH BUTTONS ([ EXTERIOR ] [ INTERIOR ]) */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-[#0a0f1d] p-1 rounded border border-[#1a2438] text-xs font-mono shadow-xl">
         <button
           onClick={() => { setViewMode('exterior'); setSelectedComponent(null); }}
@@ -510,11 +545,14 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         </div>
       </div>
 
-      {/* Hovered Component Tooltip Overlay */}
-      {hoveredNodeName && !selectedComponent && (
-        <div className="absolute bottom-16 left-3 z-10 bg-[#0a0f1d] px-3 py-1 rounded border border-[#0284c7] font-mono text-xs text-[#38bdf8] shadow-lg flex items-center gap-1.5">
-          <Info size={13} />
-          <span>Click to Inspect: <strong>{hoveredNodeName}</strong></span>
+      {/* Tiny Hover Tooltip Near Cursor (No permanent label clutter) */}
+      {hoveredNodeName && mouseScreenPos && !selectedComponent && (
+        <div
+          className="pointer-events-none absolute z-30 bg-[#0a0f1d]/90 backdrop-blur px-2.5 py-1 rounded border border-[#0284c7] font-mono text-[11px] text-[#38bdf8] shadow-lg flex items-center gap-1.5 -translate-x-1/2 -translate-y-full mb-2"
+          style={{ left: `${mouseScreenPos.x}px`, top: `${mouseScreenPos.y}px` }}
+        >
+          <Info size={12} />
+          <span>{hoveredNodeName}</span>
         </div>
       )}
 
@@ -522,11 +560,11 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       {viewMode === 'interior' && (
         <div className="absolute top-14 left-3 z-10 bg-[#0a0f1d] border border-amber-500/40 px-3 py-1 rounded font-mono text-[10px] text-amber-300 flex items-center gap-2 max-w-md">
           <Info size={13} className="text-amber-400 shrink-0" />
-          <span>CONCEPTUAL INTERIOR VIEW — AERIS Aero-Engine Digital Twin System</span>
+          <span>CONCEPTUAL DIGITAL-TWIN COMPONENT</span>
         </div>
       )}
 
-      {/* Selected Component Information Overlay Panel */}
+      {/* Single Compact Component Details Panel */}
       {selectedComponent && (
         <div className="absolute top-14 right-3 z-30 w-80 eng-panel p-4 bg-[#0a0f1d] border border-[#0284c7] text-xs font-mono space-y-3 shadow-2xl animate-fadeIn">
           <div className="flex items-center justify-between border-b border-[#1a2438] pb-2">
@@ -553,7 +591,17 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
             </span>
           </div>
 
-          <p className="text-slate-300 text-[11px] leading-relaxed font-sans">{selectedComponent.description}</p>
+          <div>
+            <span className="text-slate-500 font-bold block uppercase text-[10px] mb-0.5">FUNCTION:</span>
+            <p className="text-slate-200 text-[11px] leading-relaxed font-sans">{selectedComponent.function}</p>
+          </div>
+
+          {selectedComponent.description && (
+            <div>
+              <span className="text-slate-500 font-bold block uppercase text-[10px] mb-0.5">DESCRIPTION:</span>
+              <p className="text-slate-300 text-[11px] leading-relaxed font-sans">{selectedComponent.description}</p>
+            </div>
+          )}
 
           {selectedComponent.details && (
             <div className="p-2 bg-[#060810] rounded border border-[#1a2438] text-[11px] space-y-1 font-mono">
@@ -580,7 +628,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
               className="flex-1 py-1.5 rounded bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition"
             >
               <Focus size={13} />
-              <span>[ FOCUS CAMERA ]</span>
+              <span>[ FOCUS ]</span>
             </button>
             <button
               onClick={() => setSelectedComponent(null)}

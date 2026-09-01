@@ -1,0 +1,149 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "AeroTwin TAPAS-BH-201 GLTF Generator"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "TAPAS_BH_201_MALE_UAV_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "TAPAS_BH_201_Root",
+      "children": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "name": "fuselage",
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "satcom_radome_nose",
+      "translation": [
+        4.2,
+        0.2,
+        0
+      ]
+    },
+    {
+      "name": "left_wing",
+      "translation": [
+        0,
+        0.1,
+        -5.5
+      ]
+    },
+    {
+      "name": "right_wing",
+      "translation": [
+        0,
+        0.1,
+        5.5
+      ]
+    },
+    {
+      "name": "left_engine_nacelle",
+      "translation": [
+        -0.8,
+        -0.2,
+        -1.8
+      ]
+    },
+    {
+      "name": "right_engine_nacelle",
+      "translation": [
+        -0.8,
+        -0.2,
+        1.8
+      ]
+    },
+    {
+      "name": "tail_assembly",
+      "translation": [
+        -4.5,
+        0.8,
+        0
+      ]
+    },
+    {
+      "name": "sensor_turret",
+      "translation": [
+        3.6,
+        -0.6,
+        0
+      ]
+    },
+    {
+      "name": "landing_gear",
+      "translation": [
+        0,
+        -0.8,
+        0
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "Tactical_Light_Grey_PBR",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.8,
+          0.83,
+          0.88,
+          1.0
+        ],
+        "metallicFactor": 0.35,
+        "roughnessFactor": 0.4
+      }
+    },
+    {
+      "name": "Matte_Black_Radome",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.08,
+          0.09,
+          0.12,
+          1.0
+        ],
+        "metallicFactor": 0.1,
+        "roughnessFactor": 0.2
+      }
+    },
+    {
+      "name": "Engine_Nacelle_Thermal",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.02,
+          0.7,
+          0.83,
+          1.0
+        ],
+        "metallicFactor": 0.8,
+        "roughnessFactor": 0.2
+      },
+      "emissiveFactor": [
+        0.02,
+        0.7,
+        0.83
+      ]
+    }
+  ]
+}

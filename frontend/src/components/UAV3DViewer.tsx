@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { UAV3DState } from '../types/telemetry';
 import {
   Eye,
@@ -26,7 +28,8 @@ import {
   CheckCircle2,
   ZoomIn,
   ZoomOut,
-  Maximize
+  Maximize,
+  ExternalLink
 } from 'lucide-react';
 
 interface UAV3DViewerProps {
@@ -69,9 +72,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   const internalSystemsRef = useRef<THREE.Group | null>(null);
   const rightPropRef = useRef<THREE.Group | null>(null);
   const leftPropRef = useRef<THREE.Group | null>(null);
-  const rightEngineMeshRef = useRef<THREE.Mesh | null>(null);
-  const leftEngineMeshRef = useRef<THREE.Mesh | null>(null);
-  const engineLightRef = useRef<THREE.PointLight | null>(null);
+  const engineNodeRef = useRef<THREE.Object3D | null>(null);
 
   // Individual Internal Sub-assembly References
   const engineBlockMeshRef = useRef<THREE.Group | null>(null);
@@ -88,6 +89,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   const [selectedComponent, setSelectedComponent] = useState<InternalComponent | null>(null);
   const [highlightedParameter, setHighlightedParameter] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isCustomModelLoaded, setIsCustomModelLoaded] = useState(false);
 
   // User Interactive Drag State
   const isUserInteracting = useRef<boolean>(false);
@@ -111,7 +113,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         healthPct: Math.round(state.engineHealth),
         status: state.engineStatus === 'critical' ? 'critical' : state.engineStatus === 'warning' ? 'warning' : 'healthy',
         modelStatus: state.cht > 210 || state.egt > 880 ? 'deviating' : 'expected',
-        description: '4-stroke 4-cylinder turbocharged aero-piston engine block with liquid cooled cylinder heads and air cooled cylinders.',
+        description: '4-stroke 4-cylinder turbocharged aero-piston engine block powering DRDO TAPAS-BH-201 MALE UAV.',
         telemetry: {
           'RPM': `${state.rpm} RPM`,
           'CHT': `${state.cht} °C`,
@@ -142,7 +144,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         healthPct: state.activeFault?.includes('injector') ? 42 : 96,
         status: state.activeFault?.includes('injector') ? 'critical' : 'healthy',
         modelStatus: state.activeFault?.includes('injector') ? 'deviating' : 'expected',
-        description: 'Dual redundant electronic fuel injectors, high-pressure electric fuel pump, and air intake plenum.',
+        description: 'Dual redundant electronic fuel injectors, high-pressure electric fuel pump, and intake plenum.',
         telemetry: {
           'Fuel Flow': '18.4 L/h',
           'Rail Pressure': '4.2 bar',
@@ -157,7 +159,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         healthPct: state.oilPressure < 28 ? 48 : 95,
         status: state.oilPressure < 28 ? 'critical' : state.oilPressure < 35 ? 'warning' : 'healthy',
         modelStatus: state.oilPressure < 35 ? 'deviating' : 'expected',
-        description: 'Dry sump oil lubrication system, positive displacement trochoid pump, thermostat, and oil cooler radiator matrix.',
+        description: 'Dry sump oil lubrication system, positive displacement trochoid pump, thermostat, and radiator matrix.',
         telemetry: {
           'Oil Pressure': `${state.oilPressure} PSI`,
           'Oil Temperature': '88.5 °C',
@@ -187,7 +189,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         healthPct: 97,
         status: 'healthy',
         modelStatus: 'expected',
-        description: 'Dual channel full-authority digital engine control unit (FADEC/ECU) with telemetry acquisition sensor interface.',
+        description: 'Dual channel full-authority digital engine control unit (FADEC/ECU) with telemetry interface.',
         telemetry: {
           'ECU Channel A': 'Active (Master)',
           'ECU Channel B': 'Standby (Synced)',
@@ -258,7 +260,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
-    // 4. Orbit Controls (Unconstrained 360 Spherical Rotation + Touch Support)
+    // 4. Orbit Controls (Unconstrained 360° Spherical Rotation + Touch Support)
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -266,7 +268,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.enableZoom = true;
-    controls.minDistance = 1.0;
+    controls.minDistance = 0.5;
     controls.maxDistance = 60.0;
     controls.enablePan = true;
     controls.enableRotate = true;
@@ -315,13 +317,69 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     grid.position.y = -3.5;
     scene.add(grid);
 
-    // 6. Build TAPAS-BH-201 (Rustom-II) MALE UAV Root Group
+    // 6. Root Group for TAPAS-BH-201 (Rustom-II)
     const uavRootGroup = new THREE.Group();
     uavRootGroup.name = "TAPAS_BH_201";
     uavRootRef.current = uavRootGroup;
     scene.add(uavRootGroup);
 
-    // Authentic PBR Materials (Official DRDO RUSTOM-II Palette)
+    // Setup GLTFLoader + DRACOLoader
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    // Model candidate files to load (tries downloaded Sketchfab asset first)
+    const modelCandidates = [
+      '/models/drdo_rustom_2_uav.glb',
+      '/models/drdo_rustom_2_uav.gltf',
+      '/models/tapas_bh201_rustom2.gltf'
+    ];
+
+    const tryLoadNextModel = (index: number) => {
+      if (index >= modelCandidates.length) return;
+      gltfLoader.load(
+        modelCandidates[index],
+        (gltf) => {
+          if (gltf && gltf.scene) {
+            let meshCount = 0;
+            gltf.scene.traverse((child) => {
+              if (child instanceof THREE.Mesh) meshCount++;
+              const nameLower = child.name.toLowerCase();
+              if (nameLower.includes('engine') || nameLower.includes('rotax') || nameLower.includes('nacelle')) {
+                engineNodeRef.current = child;
+              }
+            });
+
+            if (meshCount > 0) {
+              if (exteriorShellRef.current) {
+                exteriorShellRef.current.visible = false;
+              }
+              uavRootGroup.add(gltf.scene);
+              setIsCustomModelLoaded(true);
+
+              // Calculate bounding box and update OrbitControls bounds dynamically
+              const box = new THREE.Box3().setFromObject(gltf.scene);
+              const sphere = box.getBoundingSphere(new THREE.Sphere());
+              if (controlsRef.current && sphere.radius > 0) {
+                controlsRef.current.minDistance = Math.max(0.5, sphere.radius * 0.2);
+                controlsRef.current.maxDistance = Math.max(50.0, sphere.radius * 6.0);
+              }
+            } else {
+              tryLoadNextModel(index + 1);
+            }
+          }
+        },
+        undefined,
+        () => {
+          tryLoadNextModel(index + 1);
+        }
+      );
+    };
+
+    tryLoadNextModel(0);
+
+    // Baseline DRDO Rustom-II Materials
     const drdoLightGreyMaterial = new THREE.MeshStandardMaterial({
       color: 0xcbd5e1,
       metalness: 0.35,
@@ -418,22 +476,14 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const rightEngineNacelle = new THREE.Mesh(nacelleGeo, nacelleMaterial);
     rightEngineNacelle.rotation.z = Math.PI / 2;
     rightEngineNacelle.position.set(-0.8, -0.2, 1.8);
-    rightEngineMeshRef.current = rightEngineNacelle;
     rightEngineNacelle.name = "Engine_RightNacelle";
     exteriorShellGroup.add(rightEngineNacelle);
 
     const leftEngineNacelle = new THREE.Mesh(nacelleGeo, nacelleMaterial);
     leftEngineNacelle.rotation.z = Math.PI / 2;
     leftEngineNacelle.position.set(-0.8, -0.2, -1.8);
-    leftEngineMeshRef.current = leftEngineNacelle;
     leftEngineNacelle.name = "Engine_LeftNacelle";
     exteriorShellGroup.add(leftEngineNacelle);
-
-    // Thermal Light Indicator
-    const engineLight = new THREE.PointLight(0x06b6d4, 3.5, 9);
-    engineLight.position.set(-0.8, -0.2, 1.8);
-    engineLightRef.current = engineLight;
-    uavRootGroup.add(engineLight);
 
     // High T-Tail Assembly
     const tailFin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 0.12), drdoLightGreyMaterial);
@@ -501,41 +551,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       leftPropGroup.add(bGroup);
     }
 
-    // Landing Gear
-    const gearGroup = new THREE.Group();
-    gearGroup.name = "Landing_Gear";
-    uavRootGroup.add(gearGroup);
-
-    const strutGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.2, 12);
-    const tireGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.16, 16);
-
-    const noseStrut = new THREE.Mesh(strutGeo, metallicChromeMaterial);
-    noseStrut.position.set(3.2, -0.9, 0);
-    gearGroup.add(noseStrut);
-
-    const noseTire = new THREE.Mesh(tireGeo, rubberMaterial);
-    noseTire.rotation.x = Math.PI / 2;
-    noseTire.position.set(3.2, -1.45, 0);
-    gearGroup.add(noseTire);
-
-    const mainRightStrut = new THREE.Mesh(strutGeo, metallicChromeMaterial);
-    mainRightStrut.position.set(-0.2, -0.9, 1.8);
-    gearGroup.add(mainRightStrut);
-
-    const mainRightTire = new THREE.Mesh(tireGeo, rubberMaterial);
-    mainRightTire.rotation.x = Math.PI / 2;
-    mainRightTire.position.set(-0.2, -1.45, 1.8);
-    gearGroup.add(mainRightTire);
-
-    const mainLeftStrut = new THREE.Mesh(strutGeo, metallicChromeMaterial);
-    mainLeftStrut.position.set(-0.2, -0.9, -1.8);
-    gearGroup.add(mainLeftStrut);
-
-    const mainLeftTire = new THREE.Mesh(tireGeo, rubberMaterial);
-    mainLeftTire.rotation.x = Math.PI / 2;
-    mainLeftTire.position.set(-0.2, -1.45, -1.8);
-    gearGroup.add(mainLeftTire);
-
     // --- DETAILED INTERNAL ENGINEERING SUB-ASSEMBLIES ---
     const internalSystemsGroup = new THREE.Group();
     internalSystemsGroup.name = "internalSystems";
@@ -567,11 +582,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       engineBlockGroup.add(cyl);
     }
 
-    const exhaustHeader = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 12), metalEngineMat);
-    exhaustHeader.rotation.z = Math.PI / 2;
-    exhaustHeader.position.set(-0.1, -0.35, 0.25);
-    engineBlockGroup.add(exhaustHeader);
-
     // Drivetrain
     const drivetrainGroup = new THREE.Group();
     drivetrainGroup.name = "comp_drivetrain";
@@ -582,11 +592,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const gearbox = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.5, 16), metalEngineMat);
     gearbox.rotation.z = Math.PI / 2;
     drivetrainGroup.add(gearbox);
-
-    const driveShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 12), metalEngineMat);
-    driveShaft.rotation.z = Math.PI / 2;
-    driveShaft.position.x = 0.5;
-    drivetrainGroup.add(driveShaft);
 
     // Fuel System
     const fuelGroup = new THREE.Group();
@@ -599,12 +604,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     fuelRail.rotation.z = Math.PI / 2;
     fuelGroup.add(fuelRail);
 
-    for (let i = 0; i < 4; i++) {
-      const inj = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2, 12), fuelRailMat);
-      inj.position.set(-0.45 + i * 0.3, -0.1, 0);
-      fuelGroup.add(inj);
-    }
-
     // Oil System
     const oilGroup = new THREE.Group();
     oilGroup.name = "comp_oilSystem";
@@ -615,22 +614,13 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     const oilSump = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), oilSumpMat);
     oilGroup.add(oilSump);
 
-    const oilCooler = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.1), metalEngineMat);
-    oilCooler.position.set(-0.2, 0.3, 0.3);
-    oilGroup.add(oilCooler);
-
-    // Electrical System
+    // Electrical & ECU
     const elecGroup = new THREE.Group();
     elecGroup.name = "comp_electricalSystem";
     electricalMeshRef.current = elecGroup;
     elecGroup.position.set(-0.3, -0.1, 1.8);
     internalSystemsGroup.add(elecGroup);
 
-    const alternator = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.35, 16), electricalMat);
-    alternator.rotation.z = Math.PI / 2;
-    elecGroup.add(alternator);
-
-    // ECU System
     const ecuGroup = new THREE.Group();
     ecuGroup.name = "comp_ecuSystem";
     ecuMeshRef.current = ecuGroup;
@@ -639,11 +629,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
 
     const ecuBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.6), ecuBoxMat);
     ecuGroup.add(ecuBox);
-
-    const harness = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 12), electricalMat);
-    harness.rotation.z = Math.PI / 2;
-    harness.position.set(-1.1, 0, 0);
-    ecuGroup.add(harness);
 
     // Raycaster Component Selection
     const raycaster = new THREE.Raycaster();
@@ -695,7 +680,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       if (rightPropRef.current) rightPropRef.current.rotation.x += delta * rpmSpeed;
       if (leftPropRef.current) leftPropRef.current.rotation.x += delta * rpmSpeed;
 
-      // Smooth Gentle Pitch & Floating
+      // Smooth Pitch & Floating
       uavRootGroup.position.y = Math.sin(clock.getElapsedTime() * 0.7) * 0.12;
       uavRootGroup.rotation.z = Math.sin(clock.getElapsedTime() * 0.4) * 0.015;
 
@@ -710,15 +695,13 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
             child.position.y = (child.name === 'Nose_SATCOM' ? 0.65 : 0) + exp * 1.8;
           } else if (child.name === 'Nose_Cap') {
             child.position.x = 4.7 + exp * 1.6;
-          } else if (child.name === 'Engine_RightNacelle') {
-            child.position.y = -0.2 + exp * 1.2;
-          } else if (child.name === 'Engine_LeftNacelle') {
+          } else if (child.name === 'Engine_RightNacelle' || child.name === 'Engine_LeftNacelle') {
             child.position.y = -0.2 + exp * 1.2;
           }
         });
       }
 
-      // Smooth Camera Animation (Only lerp when user is NOT actively dragging mouse/touch!)
+      // Smooth Camera Animation (Only lerp when user is NOT actively dragging mouse/touch)
       if (isUserInteracting.current && cameraRef.current && controlsRef.current) {
         targetCamPos.current.copy(cameraRef.current.position);
         targetLookAt.current.copy(controlsRef.current.target);
@@ -755,7 +738,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     };
   }, []);
 
-  // Update Exterior Shell Opacity
+  // Update Shell Opacity based on View Mode
   useEffect(() => {
     if (!exteriorShellRef.current) return;
 
@@ -789,7 +772,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     });
   }, [wireframe]);
 
-  // --- CAMERA CONTROL HANDLERS ---
+  // --- CAMERA & VIEW CONTROL HANDLERS ---
   const handleZoomIn = () => {
     if (!cameraRef.current) return;
     const camera = cameraRef.current;
@@ -817,19 +800,24 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     if (controlsRef.current) {
       controlsRef.current.target.copy(center);
     }
-    const radius = sphere.radius || 12.0;
-    targetCamPos.current.set(center.x + radius * 1.5, center.y + radius * 0.8, center.z + radius * 1.5);
+    const fov = cameraRef.current.fov * (Math.PI / 180);
+    const radius = sphere.radius > 0 ? sphere.radius : 12.0;
+    const dist = Math.abs(radius / Math.sin(fov / 2)) * 1.25;
+    targetCamPos.current.set(center.x + dist * 0.7, center.y + dist * 0.4, center.z + dist * 0.7);
     setSelectedComponent(null);
   };
 
   const handleEngineFocus = () => {
     setViewMode('cutaway');
-    const enginePos = new THREE.Vector3(-0.8, -0.2, 1.8);
-    targetLookAt.current.copy(enginePos);
-    if (controlsRef.current) {
-      controlsRef.current.target.copy(enginePos);
+    let engineWorldPos = new THREE.Vector3(-0.8, -0.2, 1.8);
+    if (engineNodeRef.current) {
+      engineNodeRef.current.getWorldPosition(engineWorldPos);
     }
-    targetCamPos.current.set(-1.2, 1.2, 2.8);
+    targetLookAt.current.copy(engineWorldPos);
+    if (controlsRef.current) {
+      controlsRef.current.target.copy(engineWorldPos);
+    }
+    targetCamPos.current.set(engineWorldPos.x - 1.2, engineWorldPos.y + 1.0, engineWorldPos.z + 2.2);
   };
 
   const handleResetView = () => {
@@ -936,25 +924,31 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         </div>
       )}
 
-      {/* Top Left Aircraft Identity Badge */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-950/85 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-md font-mono text-xs">
-        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-        <span className="text-slate-100 font-bold uppercase">TAPAS-BH-201 / RUSTOM-II</span>
-        <span className="text-slate-500">|</span>
-        <span className="text-slate-400 text-[10px]">DRDO ADE (9.5m / 20.6m)</span>
-        <span className="text-slate-500">|</span>
-        <span className="text-cyan-400 font-semibold uppercase">{viewMode} MODE</span>
+      {/* Top Left Aircraft Identity & Attribution Badge */}
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 bg-slate-950/85 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-md font-mono text-xs shadow-xl">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-slate-100 font-bold uppercase">DRDO TAPAS-BH-201 / RUSTOM-II</span>
+          <span className="text-slate-500">|</span>
+          <span className="text-slate-400 text-[10px]">3D Digital Twin</span>
+          <span className="text-slate-500">|</span>
+          <span className="text-cyan-400 font-semibold uppercase">{viewMode} MODE</span>
+        </div>
+        <div className="bg-slate-950/85 px-2.5 py-1 rounded-lg border border-slate-800/80 backdrop-blur-md font-mono text-[10px] text-slate-400 flex items-center gap-1.5">
+          <Info size={12} className="text-cyan-400 shrink-0" />
+          <span>Model: DRDO Rustom 2 UAV by Priyajit Bera (Sketchfab CC BY)</span>
+        </div>
       </div>
 
       {/* Conceptual Digital-Twin Visualization Banner */}
       {viewMode !== 'exterior' && (
-        <div className="absolute top-16 left-4 z-10 bg-slate-950/90 border border-amber-500/40 px-3 py-1.5 rounded-xl backdrop-blur-md font-mono text-[10px] text-amber-300 flex items-center gap-2 max-w-sm">
+        <div className="absolute top-20 left-4 z-10 bg-slate-950/90 border border-amber-500/40 px-3 py-1.5 rounded-xl backdrop-blur-md font-mono text-[10px] text-amber-300 flex items-center gap-2 max-w-sm">
           <Info size={14} className="text-amber-400 shrink-0" />
-          <span>CONCEPTUAL DIGITAL-TWIN VISUALIZATION — Aero Engine Health Monitoring Prototype</span>
+          <span>CONCEPTUAL DIGITAL-TWIN INTERNAL VIEW — Aero Engine Health Monitoring</span>
         </div>
       )}
 
-      {/* Selected Internal Component Inspection Panel (Right Side Popover) */}
+      {/* Selected Internal Component Inspection Panel */}
       {selectedComponent && (
         <div className="absolute top-16 right-4 z-30 max-w-sm w-80 glass-panel p-4 rounded-xl border border-cyan-500/60 bg-slate-950/95 backdrop-blur-xl text-xs space-y-3 shadow-2xl animate-fadeIn">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -993,13 +987,6 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
                 <span className="text-cyan-400 font-bold">{v}</span>
               </div>
             ))}
-          </div>
-
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 pt-1">
-            <span>MODEL BEHAVIOR:</span>
-            <span className={`font-bold ${selectedComponent.modelStatus === 'deviating' ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {selectedComponent.modelStatus.toUpperCase()}
-            </span>
           </div>
         </div>
       )}
@@ -1057,8 +1044,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         </div>
       )}
 
-      {/* 3. BOTTOM CONTROL BAR: COMPACT FLOATING BAR ALONG BOTTOM EDGE INSIDE VIEWPORT */}
-      {/* Positioned at bottom-4 right-4 inside the 3D viewport: [ + ][ − ][ ⛶ ][ ↻ ][ ◉ ][ ↗ ] */}
+      {/* 3. BOTTOM RIGHT FLOATING CONTROL BAR */}
       <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1 bg-slate-950/90 p-1.5 rounded-xl border border-slate-800 backdrop-blur-md text-xs shadow-2xl select-none">
         <button
           onClick={handleZoomIn}

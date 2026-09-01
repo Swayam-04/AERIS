@@ -352,12 +352,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <button
-            onClick={() => handleNavClick('overview')}
+            onClick={() => setShowSettingsModal(true)}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition text-xs"
-            title="Console Settings"
+            title="Console Settings & Credits"
           >
             <Settings size={16} className="shrink-0 text-slate-400" />
-            {!collapsed && <span>Settings</span>}
+            {!collapsed && <span>Settings & Credits</span>}
           </button>
 
           <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
@@ -384,6 +384,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       </aside>
+
+      {/* Settings / About Credits Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="max-w-md w-full glass-panel p-6 rounded-2xl border border-cyan-500/50 bg-[#080d1a] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Settings className="text-cyan-400" size={20} />
+                <h3 className="font-bold text-slate-100 text-base">AERIS System Settings & Credits</h3>
+              </div>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-slate-400 hover:text-slate-200 font-bold text-lg px-2"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300">
+              <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                <span className="font-bold font-mono text-cyan-400 text-xs uppercase tracking-wider block">
+                  3D Asset Attribution (CC BY)
+                </span>
+                <div className="font-mono text-[11px] space-y-1 text-slate-300">
+                  <p><span className="text-slate-500">3D Model:</span> <strong className="text-slate-100">DRDO Rustom 2 UAV</strong></p>
+                  <p><span className="text-slate-500">Artist:</span> <strong className="text-slate-100">Priyajit Bera</strong> (@priyajitbera)</p>
+                  <p><span className="text-slate-500">Source:</span> <a href="https://sketchfab.com/3d-models/drdo-rustom-2-uav-6064f6b27edf47d4832e318c48c6a2ac" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">Sketchfab Asset Page ↗</a></p>
+                  <p><span className="text-slate-500">License:</span> <strong className="text-emerald-400">Creative Commons Attribution (CC BY)</strong></p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                <span className="font-bold text-slate-200 block">AERIS Platform Info</span>
+                <p className="text-slate-400">Aero Engine Reliability & Intelligence System</p>
+                <p className="text-slate-400">SIH Problem Statement ID: 26054</p>
+                <p className="text-slate-400">Digital Twin Target: DRDO TAPAS-BH-201 (RUSTOM-II) MALE UAV</p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold hover:bg-cyan-400 transition text-xs"
+              >
+                Close Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

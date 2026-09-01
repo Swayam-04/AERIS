@@ -87,13 +87,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Main Left Sidebar Navigation Container */}
       <aside
-        className={`fixed top-14 bottom-0 left-0 z-40 bg-[#060913]/95 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
+        className={`fixed top-12 bottom-0 left-0 z-40 bg-[#060810] border-r border-[#1a2438] flex flex-col justify-between transition-all duration-300 ${
           isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
         } ${collapsed ? 'md:w-16' : 'md:w-64'}`}
       >
         {/* Top Header Title Block (Expanded view) */}
         {!collapsed && (
-          <div className="p-4 border-b border-slate-800/60 flex items-center justify-between">
+          <div className="p-3.5 border-b border-[#1a2438] flex items-center justify-between">
             <div>
               <h3 className="font-bold text-xs tracking-wider text-slate-100 uppercase font-mono">
                 AERIS CONSOLE
@@ -101,26 +101,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-[10px] text-slate-400 font-sans leading-tight">
                 Aero Engine Reliability & Intelligence System
               </p>
-              <p className="text-[9px] text-cyan-400 font-mono mt-0.5 font-semibold">DRDO RUSTOM-II</p>
+              <p className="text-[9px] text-[#38bdf8] font-mono mt-0.5 font-semibold">DRDO RUSTOM-II</p>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 led-glow-emerald shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           </div>
         )}
 
         {/* Scrollable Navigation Category List */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 text-xs font-sans select-none">
+        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-3 text-xs font-sans select-none">
           {/* 1. Primary Dashboard Item */}
           <div>
             <button
               onClick={() => handleNavClick('overview')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition group ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
                 currentScreen === 'overview'
-                  ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/40 shadow-sm shadow-cyan-500/20 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
               }`}
               title="Dashboard Overview"
             >
-              <LayoutDashboard size={18} className="shrink-0 text-cyan-400" />
+              <LayoutDashboard size={16} className="shrink-0 text-[#38bdf8]" />
               {!collapsed && <span>Dashboard</span>}
             </button>
           </div>
@@ -143,8 +143,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="space-y-1 mt-1">
                 <button
                   onClick={() => handleNavClick('overview')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'overview' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'overview' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Mission Overview"
                 >
@@ -154,8 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('control')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'control' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'control' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Mission Control & Injector"
                 >
@@ -165,8 +165,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('replay')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'replay' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'replay' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Mission Replay Studio"
                 >
@@ -176,8 +176,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('whatif')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'whatif' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'whatif' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="What-if Comparative Analysis"
                 >
@@ -199,25 +199,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ChevronDown size={14} className={`transition-transform duration-200 ${openSections.digitalTwin ? '' : '-rotate-90'}`} />
               </button>
             ) : (
-              <div className="w-full h-[1px] bg-slate-800/80 my-2" />
+              <div className="w-full h-[1px] bg-[#1a2438] my-2" />
             )}
 
             {(!collapsed ? openSections.digitalTwin : true) && (
               <div className="space-y-1 mt-1">
                 <button
                   onClick={() => handleNavClick('digital_twin', 'exterior')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'digital_twin' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'digital_twin' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="3D UAV View"
                 >
-                  <Box size={16} className="shrink-0 text-cyan-400" />
+                  <Box size={16} className="shrink-0 text-[#38bdf8]" />
                   {!collapsed && <span>3D UAV</span>}
                 </button>
 
                 <button
                   onClick={() => handleNavClick('digital_twin', 'internal')}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0e1526] transition"
                   title="Internal Cutaway View"
                 >
                   <Layers size={16} className="shrink-0 text-amber-400" />
@@ -226,7 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('digital_twin', 'exploded')}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0e1526] transition"
                   title="Cutaway / Exploded View"
                 >
                   <Activity size={16} className="shrink-0 text-rose-400" />
@@ -247,15 +247,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ChevronDown size={14} className={`transition-transform duration-200 ${openSections.engine ? '' : '-rotate-90'}`} />
               </button>
             ) : (
-              <div className="w-full h-[1px] bg-slate-800/80 my-2" />
+              <div className="w-full h-[1px] bg-[#1a2438] my-2" />
             )}
 
             {(!collapsed ? openSections.engine : true) && (
               <div className="space-y-1 mt-1">
                 <button
                   onClick={() => handleNavClick('telemetry')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'telemetry' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'telemetry' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Telemetry Signal Grid"
                 >
@@ -265,8 +265,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('health')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'health' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'health' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Engine Health Decomposition"
                 >
@@ -276,8 +276,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('faults')}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'faults' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'faults' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Diagnostic Fault Terminal"
                 >
@@ -286,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {!collapsed && <span>Fault Center</span>}
                   </div>
                   {alertCount > 0 && (
-                    <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-rose-500 text-slate-950 font-mono">
+                    <span className="px-1.5 py-0.2 text-[10px] font-bold rounded bg-rose-500 text-slate-950 font-mono">
                       {alertCount}
                     </span>
                   )}
@@ -294,8 +294,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 <button
                   onClick={() => handleNavClick('rul')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'rul' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'rul' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Remaining Useful Life (RUL)"
                 >
@@ -317,15 +317,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ChevronDown size={14} className={`transition-transform duration-200 ${openSections.analytics ? '' : '-rotate-90'}`} />
               </button>
             ) : (
-              <div className="w-full h-[1px] bg-slate-800/80 my-2" />
+              <div className="w-full h-[1px] bg-[#1a2438] my-2" />
             )}
 
             {(!collapsed ? openSections.analytics : true) && (
               <div className="space-y-1 mt-1">
                 <button
                   onClick={() => handleNavClick('reliability')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition ${
-                    currentScreen === 'reliability' ? 'text-cyan-400 font-semibold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'reliability' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
                   }`}
                   title="Reliability Risk Analytics"
                 >

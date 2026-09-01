@@ -68,7 +68,7 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
   return (
     <div className="eng-panel p-3 font-mono text-xs select-none">
       {/* Top Header & Controller Mode Switch */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#162035] pb-2.5 mb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1a2438] pb-2.5 mb-2.5">
         <div className="flex items-center gap-2">
           <Compass className="w-4 h-4 text-[#38bdf8]" />
           <span className="font-sans font-bold text-slate-200 text-xs tracking-wide">
@@ -82,7 +82,7 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
         </div>
 
         {onToggleAutoMode && !isReplayMode && (
-          <div className="flex items-center gap-1 bg-[#060913] p-1 rounded border border-[#162035] text-[11px]">
+          <div className="flex items-center gap-1 bg-[#060810] p-1 rounded border border-[#1a2438] text-[11px]">
             <button
               onClick={() => onToggleAutoMode(true)}
               className={`px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 ${
@@ -126,7 +126,7 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
                   ? 'bg-[#0e1935] border-[#0284c7] text-slate-100 ring-1 ring-[#0284c7]'
                   : isCompleted
                   ? 'bg-[#091422] border-emerald-900/60 text-emerald-300 hover:bg-[#0c1b2f]'
-                  : 'bg-[#090e1c] border-[#162035] text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  : 'bg-[#0a0f1d] border-[#1a2438] text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -145,7 +145,7 @@ export const FlightPhaseController: React.FC<FlightPhaseControllerProps> = ({
 
       {/* Phase Inspection Popover Card */}
       {selectedInspectPhase && (
-        <div className="mt-2 p-3 bg-[#0e152a] rounded border border-[#212f4d] flex items-center justify-between text-xs">
+        <div className="mt-2 p-3 bg-[#101728] rounded border border-[#283754] flex items-center justify-between text-xs">
           <div>
             <span className="text-[#38bdf8] font-bold uppercase">{selectedInspectPhase} PHASE DETAILS:</span>
             <span className="text-slate-300 ml-2">

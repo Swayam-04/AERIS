@@ -32,12 +32,12 @@ export const TopStatusBar: React.FC<TopStatusBarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full h-12 bg-[#060913] border-b border-[#162035] px-4 flex items-center justify-between text-xs font-mono select-none">
-      {/* Left: AERIS Brand Identity & Mobile Drawer Button */}
+    <header className="sticky top-0 z-40 w-full h-12 bg-[#060810] border-b border-[#1a2438] px-4 flex items-center justify-between text-xs font-mono select-none">
+      {/* Left: AERIS Brand Identity & Mobile Menu Toggle */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileMenu}
-          className="md:hidden p-1 rounded bg-[#0e152a] border border-[#212f4d] text-slate-300 hover:text-slate-100"
+          className="md:hidden p-1 rounded bg-[#0a0f1d] border border-[#1a2438] text-slate-300 hover:text-slate-100"
           title="Toggle Mobile Sidebar Navigation"
         >
           {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
@@ -49,13 +49,13 @@ export const TopStatusBar: React.FC<TopStatusBarProps> = ({
           </div>
           <div className="flex items-center gap-2 font-sans">
             <span className="font-bold text-sm tracking-wider text-slate-100 uppercase">AERIS</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#09152b] text-[#38bdf8] border border-[#163056] font-mono font-semibold" title="SIH 26054 Platform">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0a0f1d] text-[#38bdf8] border border-[#1a2438] font-mono font-semibold" title="SIH 26054 Platform">
               SIH 26054
             </span>
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-1.5 text-slate-400 bg-[#090e1c] px-2 py-0.5 rounded border border-[#162035]">
+        <div className="hidden lg:flex items-center gap-1.5 text-slate-400 bg-[#0a0f1d] px-2 py-0.5 rounded border border-[#1a2438]">
           <Clock size={12} className="text-[#38bdf8]" />
           <span>UPTIME: <strong className="text-slate-200">{formatUptime(uptimeSeconds)}</strong></span>
         </div>
@@ -63,25 +63,25 @@ export const TopStatusBar: React.FC<TopStatusBarProps> = ({
 
       {/* Center: Live Operational Telemetry Status Indicators ONLY */}
       <div className="flex items-center gap-3 text-xs font-mono">
-        <div className="flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#090e1c] border border-[#162035]">
+        <div className="flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#0a0f1d] border border-[#1a2438]">
           <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
           <span className="text-slate-300 font-bold">{wsConnected ? 'TELEMETRY LIVE' : 'DISCONNECTED'}</span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#090e1c] border border-[#162035] text-slate-400">
+        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0a0f1d] border border-[#1a2438] text-slate-400">
           <span>MISSION:</span>
           <span className="text-slate-200 font-bold">{state?.mission_id || 'AERO-MISSION-01'}</span>
         </div>
 
         {state && (
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#090e1c] border border-[#162035]">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0a0f1d] border border-[#1a2438]">
             <span className="text-slate-500">PHASE:</span>
             <span className="text-[#38bdf8] font-bold uppercase">{state.mission_phase}</span>
           </div>
         )}
 
         {state && (
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#090e1c] border border-[#162035]">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0a0f1d] border border-[#1a2438]">
             <span className="text-slate-500">HEALTH:</span>
             <span className={`font-bold ${
               state.overall_health_score > 80 ? 'text-emerald-400' :
@@ -93,7 +93,7 @@ export const TopStatusBar: React.FC<TopStatusBarProps> = ({
         )}
 
         {state && (
-          <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#090e1c] border border-[#162035]">
+          <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0a0f1d] border border-[#1a2438]">
             <span className="text-slate-500">STATUS:</span>
             <span className={`font-bold uppercase ${
               state.status === 'critical' ? 'text-rose-400' :

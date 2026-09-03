@@ -1,7 +1,6 @@
 import React from 'react';
 import { DigitalTwinState, UAV3DState, MissionPhase } from '../types/telemetry';
 import { UAV3DViewer } from '../components/UAV3DViewer';
-import { FlightPhaseController } from '../components/FlightPhaseController';
 import {
   LineChart,
   Line,
@@ -120,11 +119,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Flight Phase Timeline */}
-      <FlightPhaseController
-        currentPhase={state.mission_phase}
-        onSetPhase={onSetPhase}
-      />
 
       {/* 3. CONSOLIDATED INSTRUMENT PANEL */}
       <div className="eng-panel">

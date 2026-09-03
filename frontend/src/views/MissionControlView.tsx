@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DigitalTwinState, FaultType, MissionPhase, UAV3DState } from '../types/telemetry';
-import { FlightPhaseController } from '../components/FlightPhaseController';
 import { UAV3DViewer } from '../components/UAV3DViewer';
 import { Sliders, RotateCcw, ShieldAlert, Activity, CheckCircle2, AlertTriangle, Box, Zap, BatteryCharging } from 'lucide-react';
 
@@ -119,11 +118,6 @@ export const MissionControlView: React.FC<MissionControlViewProps> = ({
         </div>
       </div>
 
-      {/* Flight Phase Controller */}
-      <FlightPhaseController
-        currentPhase={state.mission_phase}
-        onSetPhase={onSetPhase}
-      />
 
       {/* Live RUSTOM 3D Viewport & Scenario Result Summary Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

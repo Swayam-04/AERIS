@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DigitalTwinState, UAV3DState } from '../types/telemetry';
-import { FlightPhaseController } from '../components/FlightPhaseController';
 import { UAV3DViewer } from '../components/UAV3DViewer';
 import { RotateCcw, Play, Pause, Zap, BatteryCharging, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
@@ -74,11 +73,6 @@ export const ReplayView: React.FC<ReplayViewProps> = ({ history }) => {
         </div>
       </div>
 
-      {/* Flight Phase Controller */}
-      <FlightPhaseController
-        currentPhase={selectedState?.mission_phase || 'cruise'}
-        isReplayMode={true}
-      />
 
       {/* Scrubber Controls Panel */}
       <div className="eng-panel p-4 space-y-3">

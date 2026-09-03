@@ -1,7 +1,6 @@
 import React from 'react';
 import { DigitalTwinState, UAV3DState, MissionPhase } from '../types/telemetry';
 import { UAV3DViewer } from '../components/UAV3DViewer';
-import { FlightPhaseController } from '../components/FlightPhaseController';
 import { Box, Activity, Layers, Zap } from 'lucide-react';
 
 interface LiveTwinViewProps {
@@ -44,11 +43,6 @@ export const LiveTwinView: React.FC<LiveTwinViewProps> = ({ state, onSetPhase })
         </div>
       </div>
 
-      {/* Flight Phase Controller */}
-      <FlightPhaseController
-        currentPhase={state.mission_phase}
-        onSetPhase={onSetPhase}
-      />
 
       {/* Main 3D Canvas */}
       <div className="w-full h-[520px]">

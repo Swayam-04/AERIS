@@ -135,6 +135,17 @@ export interface RULEstimate {
   alternator_rul_confidence?: string;
 }
 
+export interface ComponentFaultLocation {
+  component_id: string;
+  component_name: string;
+  subsystem: string;
+  physical_location: string;
+  mesh_anchor: string;
+  severity: 'normal' | 'warning' | 'critical';
+  correlated_signals: string[];
+  callout_text?: string;
+}
+
 export interface DigitalTwinState {
   timestamp: number;
   engine_id: string;
@@ -150,6 +161,7 @@ export interface DigitalTwinState {
   status: 'normal' | 'warning' | 'critical';
   alerts: DiagnosticAlert[];
   rul: RULEstimate | null;
+  affected_component?: ComponentFaultLocation | null;
 }
 
 export interface UAV3DState {

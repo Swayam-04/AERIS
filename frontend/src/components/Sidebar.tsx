@@ -19,7 +19,8 @@ import {
   ChevronDown,
   Activity,
   Layers,
-  Radio
+  Radio,
+  Crosshair
 } from 'lucide-react';
 import { ScreenId } from './Navigation';
 import { DigitalTwinState } from '../types/telemetry';
@@ -261,6 +262,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <Gauge size={16} className="shrink-0" />
                   {!collapsed && <span>Telemetry</span>}
+                </button>
+
+                <button
+                  onClick={() => handleNavClick('engine_fault_map')}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded font-medium transition ${
+                    currentScreen === 'engine_fault_map'
+                      ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
+                  }`}
+                  title="Internal Engine Diagnostics & Physical Fault Mapping"
+                >
+                  <div className="flex items-center gap-3">
+                    <Crosshair size={16} className="shrink-0 text-cyan-400" />
+                    {!collapsed && <span>Fault Map (3D)</span>}
+                  </div>
+                  {state?.active_fault && state.active_fault !== 'none' && (
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  )}
                 </button>
 
                 <button

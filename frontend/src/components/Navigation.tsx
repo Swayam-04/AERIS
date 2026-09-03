@@ -17,6 +17,7 @@ import { DigitalTwinState } from '../types/telemetry';
 export type ScreenId =
   | 'overview'
   | 'digital_twin'
+  | 'engine_fault_map'
   | 'telemetry'
   | 'health'
   | 'faults'
@@ -42,6 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navItems = [
     { id: 'overview' as ScreenId, label: 'Overview', icon: Activity },
     { id: 'digital_twin' as ScreenId, label: 'Digital Twin 3D', icon: Box },
+    { id: 'engine_fault_map' as ScreenId, label: 'Engine Fault Map', icon: Cpu },
     { id: 'telemetry' as ScreenId, label: 'Telemetry Grid', icon: Gauge },
     { id: 'health' as ScreenId, label: 'Engine Health', icon: Cpu },
     { id: 'faults' as ScreenId, label: 'Fault Center', icon: ShieldAlert, badge: state?.alerts.length || 0 },

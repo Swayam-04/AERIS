@@ -154,6 +154,17 @@ class RULEstimate(BaseModel):
     alternator_rul_confidence: Optional[str] = "880–980 flight hours (85% confidence)"
 
 
+class ComponentFaultLocation(BaseModel):
+    component_id: str
+    component_name: str
+    subsystem: str
+    physical_location: str
+    mesh_anchor: str
+    severity: str = "normal"  # normal, warning, critical
+    correlated_signals: List[str] = []
+    callout_text: Optional[str] = None
+
+
 class DigitalTwinState(BaseModel):
     timestamp: float
     engine_id: str
@@ -169,6 +180,7 @@ class DigitalTwinState(BaseModel):
     status: str = Field(..., description="normal, warning, critical")
     alerts: List[DiagnosticAlert] = []
     rul: Optional[RULEstimate] = None
+    affected_component: Optional[ComponentFaultLocation] = None
 
 
 class FaultInjectionRequest(BaseModel):

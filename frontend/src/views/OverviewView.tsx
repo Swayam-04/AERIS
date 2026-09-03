@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Cpu,
-  Layers
+  Layers,
+  Crosshair
 } from 'lucide-react';
 
 interface OverviewViewProps {
@@ -31,6 +32,7 @@ interface OverviewViewProps {
   history: DigitalTwinState[];
   onNavigateToFaults: () => void;
   onNavigateToControl: () => void;
+  onNavigateToEngineMap?: () => void;
   onSetPhase?: (phase: MissionPhase) => void;
 }
 
@@ -39,6 +41,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   history,
   onNavigateToFaults,
   onNavigateToControl,
+  onNavigateToEngineMap,
   onSetPhase
 }) => {
   if (!state) {
@@ -117,6 +120,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
             POWERPLANT: <strong className="text-emerald-400">LYCOMING O-320 (150 HP)</strong>
           </div>
+          {onNavigateToEngineMap && (
+            <button
+              onClick={onNavigateToEngineMap}
+              className="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-800/80 text-cyan-300 font-mono font-semibold transition flex items-center gap-1.5 shadow-sm"
+              title="Open dedicated Engine Health & 3D Fault Map"
+            >
+              <Crosshair size={12} className="text-cyan-400" />
+              <span>3D FAULT MAP</span>
+            </button>
+          )}
         </div>
       </div>
 

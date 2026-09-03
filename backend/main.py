@@ -197,6 +197,70 @@ def get_3d_uav_state():
     }
 
 
+@app.get("/api/engine/fault-mapping")
+def get_engine_fault_mapping():
+    """
+    Returns complete physical component registry and fault-to-location mapping
+    for the Lycoming O-320 horizontally opposed 4-cylinder aero engine.
+    """
+    return {
+        "engine_model": "Lycoming O-320-D2J",
+        "type": "Four-Cylinder, Air-Cooled, Horizontally Opposed Aero-Piston Engine",
+        "displacement_cc": 5240,
+        "rated_power_hp": 150,
+        "cylinders": [
+            {"id": "cylinder_1", "name": "Cylinder #1", "bank": "Starboard (Right)", "position": "Forward", "bore_mm": 130.2, "stroke_mm": 98.4},
+            {"id": "cylinder_2", "name": "Cylinder #2", "bank": "Port (Left)", "position": "Forward", "bore_mm": 130.2, "stroke_mm": 98.4},
+            {"id": "cylinder_3", "name": "Cylinder #3", "bank": "Starboard (Right)", "position": "Aft", "bore_mm": 130.2, "stroke_mm": 98.4},
+            {"id": "cylinder_4", "name": "Cylinder #4", "bank": "Port (Left)", "position": "Aft", "bore_mm": 130.2, "stroke_mm": 98.4}
+        ],
+        "fault_mappings": {
+            "misfire": {
+                "target_component": "cylinder_2",
+                "component_name": "Cylinder #2 Combustion Chamber",
+                "subsystem": "combustion",
+                "physical_location": "Left Bank, Forward Port Cylinder (Cyl #2)",
+                "symptoms": ["RPM drop", "Elevated 1.8g harmonic vibration", "Exhaust temperature cooling"]
+            },
+            "injector_abnormality": {
+                "target_component": "fuel_injector_2",
+                "component_name": "Fuel Injector #2",
+                "subsystem": "fuel",
+                "physical_location": "Left Bank, Cylinder #2 Intake Runner Port",
+                "symptoms": ["Elevated EGT (+145°C)", "Reduced fuel flow", "Localized lean combustion"]
+            },
+            "oil_pressure_loss": {
+                "target_component": "oil_pump",
+                "component_name": "Oil Pressure Pump & Relief Gallery",
+                "subsystem": "lubrication",
+                "physical_location": "Lower Crankcase Accessory Sump & Main Gallery",
+                "symptoms": ["Oil pressure drop below 28 PSI", "Oil temperature rise", "Bearing wear risk"]
+            },
+            "overheating": {
+                "target_component": "cylinder_head_3",
+                "component_name": "Cylinder Head #3 & Cooling Fins",
+                "subsystem": "cooling",
+                "physical_location": "Right Bank, Aft Starboard Head & Baffle Duct",
+                "symptoms": ["CHT exceeding 230°C", "Cooling airflow starvation", "Thermal gradient"]
+            },
+            "vibration_spike": {
+                "target_component": "crankshaft_prop_interface",
+                "component_name": "Crankshaft Front Journal & Propeller Flange",
+                "subsystem": "propulsion",
+                "physical_location": "Forward Crankcase Nose Section & Propeller Flange",
+                "symptoms": ["Rotational harmonic imbalance", "Propeller drive fatigue", "High g-force vibration"]
+            },
+            "sensor_drift": {
+                "target_component": "sensor_cht_3",
+                "component_name": "CHT Thermocouple Sensor #3",
+                "subsystem": "sensors",
+                "physical_location": "Cylinder #3 Spark Plug Gasket Well",
+                "symptoms": ["Calibration offset +45°C", "Engine block physically nominal", "Discrepancy vs model"]
+            }
+        }
+    }
+
+
 @app.websocket("/ws/telemetry")
 async def websocket_telemetry_endpoint(websocket: WebSocket):
     await mission_service.connect_websocket(websocket)

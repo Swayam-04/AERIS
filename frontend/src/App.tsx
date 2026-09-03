@@ -13,6 +13,7 @@ import { MissionControlView } from './views/MissionControlView';
 import { ReplayView } from './views/ReplayView';
 import { WhatIfLabView } from './views/WhatIfLabView';
 import { ReliabilityView } from './views/ReliabilityView';
+import { EngineFaultMapView } from './views/EngineFaultMapView';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<ScreenId>('overview');
@@ -172,11 +173,22 @@ export const App: React.FC = () => {
                 history={history}
                 onNavigateToFaults={() => setScreen('faults')}
                 onNavigateToControl={() => setScreen('control')}
+                onNavigateToEngineMap={() => setScreen('engine_fault_map')}
                 onSetPhase={handleSetPhase}
               />
             )}
 
             {screen === 'digital_twin' && <LiveTwinView state={twinState} onSetPhase={handleSetPhase} />}
+
+            {screen === 'engine_fault_map' && (
+              <EngineFaultMapView
+                state={twinState}
+                onInjectFault={handleInjectFault}
+                onClearFault={handleClearFault}
+                onNavigateToWhatIf={() => setScreen('whatif')}
+                onNavigateToControl={() => setScreen('control')}
+              />
+            )}
 
             {screen === 'telemetry' && <TelemetryView state={twinState} history={history} />}
 

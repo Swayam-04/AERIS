@@ -47,10 +47,10 @@ export const HealthView: React.FC<HealthViewProps> = ({ state, history }) => {
       contributing: `Vibration residual: ${state.residuals.vibration_g} g, RPM delta: ${state.residuals.rpm}`,
     },
     {
-      name: 'Electrical & Alternator Bus',
+      name: 'Electrical Power Subsystem (Battery & Alternator)',
       health: state.subsystem_health.electrical,
-      desc: 'Ensures 28V DC bus stability, alternator diode performance, and ignition coil power.',
-      contributing: `Battery voltage residual: ${state.residuals.battery_volts} V`,
+      desc: 'Monitors 28V DC bus stability, alternator power balance, battery electrochemistry, and internal cell impedance.',
+      contributing: `Bus Voltage: ${state.observed.battery_volts.toFixed(2)}V, Batt Current: ${state.observed.electrical?.battery.current !== undefined ? state.observed.electrical.battery.current.toFixed(1) : 0}A, SOC: ${state.observed.electrical?.battery.state_of_charge !== undefined ? state.observed.electrical.battery.state_of_charge.toFixed(1) : 92}%, Alt Power: ${state.observed.electrical?.alternator.output_power_w !== undefined ? state.observed.electrical.alternator.output_power_w.toFixed(0) : 840}W`,
     },
   ];
 

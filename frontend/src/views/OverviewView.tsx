@@ -18,6 +18,7 @@ import {
   Thermometer,
   Flame,
   Zap,
+  BatteryCharging,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
@@ -62,18 +63,35 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     residual_dm: s.residuals.mahalanobis_distance,
   }));
 
+  const elec = state.observed.electrical;
+
   const uav3dState: UAV3DState = {
     engineHealth: state.overall_health_score,
     engineStatus: state.status,
     missionPhase: state.mission_phase,
     activeFault: state.active_fault,
     activeAlert: state.alerts[0]?.candidate_fault || 'None',
+    faultSeverity: state.fault_severity,
     rpm: state.observed.rpm,
     cht: state.observed.cht_c,
     egt: state.observed.egt_c,
     oilPressure: state.observed.oil_pressure_psi,
     vibration: state.observed.vibration_g,
-    residualDistance: state.residuals.mahalanobis_distance
+    residualDistance: state.residuals.mahalanobis_distance,
+    electricalHealth: state.subsystem_health.electrical,
+    busVoltage: state.observed.battery_volts,
+    batterySoc: elec?.battery.state_of_charge,
+    batteryCurrent: elec?.battery.current,
+    batteryTemp: elec?.battery.temperature,
+    batteryStatus: elec?.battery.status,
+    batteryRint: elec?.battery.internal_resistance_mohm,
+    batterySoh: elec?.battery.state_of_health,
+    alternatorStatus: elec?.alternator.status,
+    alternatorPower: elec?.alternator.output_power_w,
+    alternatorCurrent: elec?.alternator.output_current,
+    alternatorRegError: elec?.alternator.regulation_error_pct,
+    alternatorHealth: elec?.alternator.health,
+    alternatorTemp: elec?.alternator.temperature,
   };
 
   return (
@@ -108,7 +126,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         onSetPhase={onSetPhase}
       />
 
-      {/* 3. CONSOLIDATED INSTRUMENT PANEL (Replaces Card Spam) */}
+      {/* 3. CONSOLIDATED INSTRUMENT PANEL */}
       <div className="eng-panel">
         <div className="eng-header flex items-center justify-between">
           <span className="font-sans font-bold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
@@ -209,7 +227,165 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* 4. MAIN SPLIT PANEL: 3D DIGITAL TWIN & REAL-TIME OBSERVED VS EXPECTED CHART */}
+      {/* 4. COMPACT ELECTRICAL POWER SYSTEM PANEL (Requirement 25) */}
+      <div className="eng-panel font-mono text-xs">
+        <div className="eng-header flex items-center justify-between">
+          <span className="font-sans font-bold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
+            <Zap size={14} className="text-[#38bdf8]" />
+            ELECTRICAL POWER SYSTEM DIGITAL TWIN (28V DC BUS)
+          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-slate-400">
+              POWER BALANCE: <strong className={((elec?.system.power_balance_w || 0) >= 0) ? 'text-emerald-400' : 'text-amber-400'}>
+                {elec?.system.power_balance_w !== undefined ? (elec.system.power_balance_w >= 0 ? `+${elec.system.power_balance_w.toFixed(1)}` : elec.system.power_balance_w.toFixed(1)) : '+0.0'} W
+              </strong>
+            </span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+              elec?.system.status === 'CRITICAL' ? 'eng-badge-critical' :
+              elec?.system.status === 'DEGRADED' || elec?.system.status === 'WARNING' ? 'eng-badge-warning' : 'eng-badge-success'
+            }`}>
+              {elec?.system.status || 'NORMAL'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#162035] bg-[#070b16]">
+          {/* BATTERY SUBSYSTEM */}
+          <div className="p-3 space-y-2">
+            <div className="flex items-center justify-between border-b border-[#162035] pb-1.5">
+              <span className="font-sans font-bold text-[11px] text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                <BatteryCharging size={13} className="text-[#38bdf8]" />
+                BATTERY (24V 28Ah)
+              </span>
+              <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                elec?.battery.status === 'CRITICAL' ? 'text-rose-400' :
+                elec?.battery.status === 'LOW SOC' || elec?.battery.status === 'DEGRADED' ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {elec?.battery.status || 'NORMAL'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Voltage</span>
+                <span className="text-slate-100 font-bold">{elec?.battery.voltage.toFixed(1) || state.observed.battery_volts.toFixed(1)} V</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Current</span>
+                <span className={`font-bold ${(elec?.battery.current || 0) > 1.0 ? 'text-amber-400' : (elec?.battery.current || 0) < -0.5 ? 'text-cyan-400' : 'text-slate-200'}`}>
+                  {elec?.battery.current !== undefined ? (elec.battery.current > 0 ? `+${elec.battery.current.toFixed(1)}` : elec.battery.current.toFixed(1)) : '0.0'} A
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">State of Charge (SOC)</span>
+                <span className="text-[#38bdf8] font-bold">{elec?.battery.state_of_charge.toFixed(1) || '92.0'}%</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">State of Health (SOH)</span>
+                <span className="text-emerald-400 font-bold">{elec?.battery.state_of_health.toFixed(1) || '98.5'}%</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Temperature</span>
+                <span className="text-slate-200 font-bold">{elec?.battery.temperature.toFixed(1) || '22.0'} °C</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Internal Resistance</span>
+                <span className="text-amber-400 font-bold">{elec?.battery.internal_resistance_mohm.toFixed(1) || '18.0'} mΩ</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ALTERNATOR SUBSYSTEM */}
+          <div className="p-3 space-y-2">
+            <div className="flex items-center justify-between border-b border-[#162035] pb-1.5">
+              <span className="font-sans font-bold text-[11px] text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                <Zap size={13} className="text-[#38bdf8]" />
+                ALTERNATOR (28V 70A)
+              </span>
+              <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                elec?.alternator.status === 'FAILED' ? 'text-rose-400' :
+                elec?.alternator.status === 'DEGRADED' || elec?.alternator.status === 'UNDERPERFORMING' ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {elec?.alternator.status || 'NORMAL'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Output Voltage</span>
+                <span className="text-slate-100 font-bold">{elec?.alternator.output_voltage.toFixed(1) || '28.2'} V</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Output Current</span>
+                <span className="text-slate-100 font-bold">{elec?.alternator.output_current.toFixed(1) || '30.0'} A</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Output Power</span>
+                <span className="text-[#38bdf8] font-bold">{elec?.alternator.output_power_w.toFixed(0) || '846'} W</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Temperature</span>
+                <span className="text-slate-200 font-bold">{elec?.alternator.temperature.toFixed(1) || '45.0'} °C</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Regulation Error</span>
+                <span className="text-amber-400 font-bold">{elec?.alternator.regulation_error_pct.toFixed(1) || '0.2'}%</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Alternator Health</span>
+                <span className="text-emerald-400 font-bold">{elec?.alternator.health.toFixed(1) || '98.0'}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SYSTEM & DC BUS */}
+          <div className="p-3 space-y-2">
+            <div className="flex items-center justify-between border-b border-[#162035] pb-1.5">
+              <span className="font-sans font-bold text-[11px] text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                <Activity size={13} className="text-[#38bdf8]" />
+                DC BUS & LOAD BALANCE
+              </span>
+              <span className="text-[10px] text-slate-400">
+                HEALTH: <strong className="text-emerald-400">{state.subsystem_health.electrical}%</strong>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Bus Voltage</span>
+                <span className={`font-bold ${state.observed.battery_volts < 25.0 ? 'text-rose-400' : 'text-slate-100'}`}>
+                  {state.observed.battery_volts.toFixed(2)} V
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Total Load</span>
+                <span className="text-slate-100 font-bold">{elec?.electrical_load.total_load_w.toFixed(0) || '820'} W</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Essential Load</span>
+                <span className="text-slate-300">{elec?.electrical_load.essential_load_w.toFixed(0) || '420'} W</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">Power Balance</span>
+                <span className={`font-bold ${((elec?.system.power_balance_w || 0) >= 0) ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {elec?.system.power_balance_w !== undefined ? (elec.system.power_balance_w >= 0 ? `+${elec.system.power_balance_w.toFixed(1)}` : elec.system.power_balance_w.toFixed(1)) : '+0.0'} W
+                </span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-[10px] text-slate-500 block font-sans mb-0.5">Electrical Health Index</span>
+                <div className="w-full bg-[#162035] h-1.5 rounded overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${
+                      state.subsystem_health.electrical > 80 ? 'bg-emerald-400' :
+                      state.subsystem_health.electrical > 40 ? 'bg-amber-400' : 'bg-rose-500'
+                    }`}
+                    style={{ width: `${state.subsystem_health.electrical}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. MAIN SPLIT PANEL: 3D DIGITAL TWIN & REAL-TIME OBSERVED VS EXPECTED CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* 3D Digital Twin Viewport (7 Cols) */}
         <div className="lg:col-span-7 h-[460px]">
@@ -259,7 +435,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* 5. INCIDENT & ALERTS TABLE PANEL */}
+      {/* 6. INCIDENT & ALERTS TABLE PANEL */}
       <div className="eng-panel">
         <div className="eng-header flex items-center justify-between">
           <span className="font-sans font-bold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
@@ -307,7 +483,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </table>
         ) : (
           <div className="p-4 text-center text-slate-500 font-mono text-xs">
-            ✓ NO ACTIVE ALERTS DETECTED — ALL AERO-ENGINE SUBSYSTEMS OPERATING WITHIN NOMINAL TOLERANCES
+            ✓ NO ACTIVE ALERTS DETECTED — ALL AERO-ENGINE & ELECTRICAL SUBSYSTEMS OPERATING WITHIN NOMINAL TOLERANCES
           </div>
         )}
       </div>

@@ -45,12 +45,17 @@ class DigitalTwinService:
         # 2. Compute residual vector deltas
         residuals = self.physics_model.calculate_residuals(observed, expected)
 
-        # 3. Compute Subsystem Health (0-100%) based on residual magnitudes
+        # 3. Compute Subsystem Health (0-100%) based on physical models & residuals
         piston_cyl_health = max(0.0, min(100.0, 100.0 - (abs(residuals.cht_c) * 0.8 + abs(residuals.egt_c) * 0.25)))
         lubrication_health = max(0.0, min(100.0, 100.0 - (abs(residuals.oil_pressure_psi) * 1.6 + abs(residuals.oil_temp_c) * 0.7)))
         fuel_inj_health = max(0.0, min(100.0, 100.0 - (abs(residuals.fuel_flow_lph) * 8.0 + abs(residuals.injection_timing_deg) * 3.0)))
         ignition_health = max(0.0, min(100.0, 100.0 - (abs(residuals.vibration_g) * 22.0 + (abs(residuals.rpm) * 0.1 if residuals.rpm < 0 else 0))))
-        electrical_health = max(0.0, min(100.0, 100.0 - abs(residuals.battery_volts) * 25.0))
+        
+        # Composite Electrical Power Subsystem Health (Battery + Alternator + Voltage Stability + Power Balance)
+        if observed.electrical and observed.electrical.system:
+            electrical_health = observed.electrical.system.health
+        else:
+            electrical_health = max(0.0, min(100.0, 100.0 - abs(residuals.battery_volts) * 25.0))
 
         subsystem_health = SubsystemHealth(
             piston_cylinder=round(piston_cyl_health, 1),
@@ -76,7 +81,7 @@ class DigitalTwinService:
         alerts = self.analytics_service.diagnose_fault(observed, residuals, observed.timestamp)
 
         # 6. Estimate RUL
-        rul_estimate = self.analytics_service.estimate_rul(subsystem_health, residuals)
+        rul_estimate = self.analytics_service.estimate_rul(subsystem_health, residuals, observed)
 
         return DigitalTwinState(
             timestamp=observed.timestamp,

@@ -1,12 +1,12 @@
 export interface UAVComponentInfo {
   id: string;
   name: string;
-  category: 'Propulsion' | 'Aerodynamic Structure' | 'Flight Control' | 'Avionics & Sensors' | 'Landing System' | 'Thermal & Systems';
+  category: 'Propulsion' | 'Aerodynamic Structure' | 'Flight Control' | 'Avionics & Sensors' | 'Landing System' | 'Thermal & Systems' | 'Electrical Power Subsystem';
   function: string;
   description?: string;
   source: 'Model geometry' | 'CONCEPTUAL DIGITAL-TWIN COMPONENT';
   position: [number, number, number];
-  status?: 'NORMAL' | 'DEGRADED' | 'WARNING';
+  status?: 'NORMAL' | 'DEGRADED' | 'WARNING' | 'CRITICAL';
   details?: Record<string, string>;
 }
 
@@ -250,5 +250,55 @@ export const UAV_COMPONENT_CATALOG: Record<string, UAVComponentInfo> = {
     source: 'CONCEPTUAL DIGITAL-TWIN COMPONENT',
     position: [0.5, 0.2, 0],
     status: 'NORMAL'
+  },
+
+  // Electrical Power Subsystem Components
+  battery: {
+    id: 'battery',
+    name: 'Main Avionics & Buffer Battery (24V 28Ah)',
+    category: 'Electrical Power Subsystem',
+    function: 'Provides buffer power, avionics voltage stabilization, transient peak supply, and engine start.',
+    description: '8S LiFePO4 / Sealed Aircraft Battery pack with integrated BMS telemetry located in forward fuselage bay.',
+    source: 'CONCEPTUAL DIGITAL-TWIN COMPONENT',
+    position: [0.35, 0.05, 0.0],
+    status: 'NORMAL',
+    details: {
+      'Pack Architecture': '8S LiFePO4 (Lithium Iron Phosphate)',
+      'Rated Capacity': '28.0 Ah / 716.8 Wh',
+      'Nominal Terminal Voltage': '25.6 V (Float: 27.2 V)',
+      'Baseline Impedance': '18.0 mΩ',
+      'Max Continuous Current': '70.0 A'
+    }
+  },
+  alternator: {
+    id: 'alternator',
+    name: 'Engine-Driven Alternator & GCU (28V 70A)',
+    category: 'Electrical Power Subsystem',
+    function: 'Generates primary electrical DC power driven by engine accessory gear drive.',
+    description: 'Brushless aircraft alternator with solid-state voltage regulator providing 28.2V DC bus power.',
+    source: 'CONCEPTUAL DIGITAL-TWIN COMPONENT',
+    position: [-0.48, -0.18, 0.22],
+    status: 'NORMAL',
+    details: {
+      'Drive Mechanism': 'Engine accessory gear train (1.8x RPM)',
+      'Max Generation': '1,960 W (70 A @ 28.2 V)',
+      'Regulation Setpoint': '28.2 ± 0.2 V',
+      'Cooling Provision': 'Blast tube ram-air cowl duct'
+    }
+  },
+  powerDistributionBus: {
+    id: 'powerDistributionBus',
+    name: '28V DC Power Distribution Bus & GCU',
+    category: 'Electrical Power Subsystem',
+    function: 'Distributes regulated 28V DC power between alternator, battery, essential avionics, and payload.',
+    description: 'Solid-state power distribution assembly with overvoltage trip and automated load-shedding control.',
+    source: 'CONCEPTUAL DIGITAL-TWIN COMPONENT',
+    position: [0.0, 0.1, 0.0],
+    status: 'NORMAL',
+    details: {
+      'Bus Voltage': '28.2 V Nominal',
+      'Protection': 'Fast-acting solid-state circuit breakers',
+      'Monitoring': 'Hall-effect current transducers'
+    }
   }
 };

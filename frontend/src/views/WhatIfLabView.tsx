@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { FaultType, DigitalTwinState, UAV3DState } from '../types/telemetry';
 import { UAV3DViewer } from '../components/UAV3DViewer';
-import { GitCompare, Play, Box, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { GitCompare, Play, Box, CheckCircle2, AlertTriangle, Zap, Layers } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 
 export const WhatIfLabView: React.FC = () => {
-  const [faultType, setFaultType] = useState<FaultType>('injector_abnormality');
-  const [severity, setSeverity] = useState<number>(0.7);
+  const [faultType, setFaultType] = useState<FaultType>('alternator_output_degradation');
+  const [severity, setSeverity] = useState<number>(0.75);
   const [faultStartSec, setFaultStartSec] = useState<number>(60);
   const [loading, setLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'thermal' | 'electrical'>('electrical');
   const [simulationData, setSimulationData] = useState<{
     baseline: DigitalTwinState[];
     degraded: DigitalTwinState[];
@@ -39,6 +40,8 @@ export const WhatIfLabView: React.FC = () => {
   const chartData = simulationData
     ? simulationData.baseline.map((base, idx) => {
         const deg = simulationData.degraded[idx] || base;
+        const bElec = base.observed.electrical;
+        const dElec = deg.observed.electrical;
         return {
           time: `${idx}s`,
           health_base: base.overall_health_score,
@@ -47,6 +50,18 @@ export const WhatIfLabView: React.FC = () => {
           egt_deg: deg.observed.egt_c,
           cht_base: base.observed.cht_c,
           cht_deg: deg.observed.cht_c,
+          // Electrical Subsystem Signals
+          bus_v_base: base.observed.battery_volts,
+          bus_v_deg: deg.observed.battery_volts,
+          soc_base: bElec?.battery.state_of_charge || 92.0,
+          soc_deg: dElec?.battery.state_of_charge || 92.0,
+          alt_pwr_base: bElec?.alternator.output_power_w || 840,
+          alt_pwr_deg: dElec?.alternator.output_power_w || 840,
+          load_base: bElec?.electrical_load.total_load_w || 820,
+          load_deg: dElec?.electrical_load.total_load_w || 820,
+          batt_curr_deg: dElec?.battery.current || 0.0,
+          elec_health_base: base.subsystem_health.electrical,
+          elec_health_deg: deg.subsystem_health.electrical,
         };
       })
     : [];
@@ -54,6 +69,8 @@ export const WhatIfLabView: React.FC = () => {
   const latestDegraded = simulationData && simulationData.degraded.length > 0
     ? simulationData.degraded[simulationData.degraded.length - 1]
     : null;
+
+  const dElec = latestDegraded?.observed.electrical;
 
   const uav3dState: UAV3DState | null = latestDegraded
     ? {
@@ -74,7 +91,21 @@ export const WhatIfLabView: React.FC = () => {
         expectedEgt: latestDegraded.expected.egt_c,
         expectedOilPressure: latestDegraded.expected.oil_pressure_psi,
         expectedVibration: latestDegraded.expected.vibration_g,
-        rulHours: latestDegraded.rul ? Math.round(latestDegraded.rul.rul_hours) : undefined
+        rulHours: latestDegraded.rul ? Math.round(latestDegraded.rul.rul_hours) : undefined,
+        electricalHealth: latestDegraded.subsystem_health.electrical,
+        busVoltage: latestDegraded.observed.battery_volts,
+        batterySoc: dElec?.battery.state_of_charge,
+        batteryCurrent: dElec?.battery.current,
+        batteryTemp: dElec?.battery.temperature,
+        batteryStatus: dElec?.battery.status,
+        batteryRint: dElec?.battery.internal_resistance_mohm,
+        batterySoh: dElec?.battery.state_of_health,
+        alternatorStatus: dElec?.alternator.status,
+        alternatorPower: dElec?.alternator.output_power_w,
+        alternatorCurrent: dElec?.alternator.output_current,
+        alternatorRegError: dElec?.alternator.regulation_error_pct,
+        alternatorHealth: dElec?.alternator.health,
+        alternatorTemp: dElec?.alternator.temperature,
       }
     : null;
 
@@ -105,12 +136,26 @@ export const WhatIfLabView: React.FC = () => {
               onChange={(e) => setFaultType(e.target.value as FaultType)}
               className="w-full bg-[#0c1224] border border-[#162035] text-slate-200 text-xs rounded p-2 focus:border-[#0284c7] outline-none font-mono"
             >
-              <option value="misfire">Cylinder Misfire</option>
-              <option value="injector_abnormality">Injector Restriction / Lean</option>
-              <option value="oil_pressure_loss">Oil Pressure Loss</option>
-              <option value="overheating">Thermal Overheating</option>
-              <option value="vibration_spike">Vibration Spike</option>
-              <option value="sensor_drift">Sensor Reading Drift</option>
+              <optgroup label="Electrical Power Subsystem">
+                <option value="alternator_output_degradation">Alternator Output Degradation</option>
+                <option value="alternator_failure">Alternator Total Failure</option>
+                <option value="battery_voltage_sag">Battery Voltage Sag under Load</option>
+                <option value="battery_internal_resistance_increase">Battery Internal Resistance Growth</option>
+                <option value="battery_low_soc">Battery Low SOC Depletion</option>
+                <option value="battery_overheating">Battery Thermal Overheating</option>
+                <option value="alternator_regulation_failure">Voltage Regulation Failure</option>
+                <option value="alternator_overheating">Alternator Stator Overheating</option>
+                <option value="electrical_load_surge">Electrical Load Surge Demand</option>
+                <option value="charging_system_fault">Charging Circuit Fault</option>
+              </optgroup>
+              <optgroup label="Engine Mechanical & Thermal">
+                <option value="misfire">Cylinder Misfire</option>
+                <option value="injector_abnormality">Injector Restriction / Lean</option>
+                <option value="oil_pressure_loss">Oil Pressure Loss</option>
+                <option value="overheating">Thermal Overheating</option>
+                <option value="vibration_spike">Vibration Spike</option>
+                <option value="sensor_drift">Sensor Reading Drift</option>
+              </optgroup>
             </select>
           </div>
 
@@ -171,7 +216,7 @@ export const WhatIfLabView: React.FC = () => {
               <div className="space-y-2 mt-3 text-xs text-slate-300">
                 <div className="flex justify-between py-1 border-b border-[#162035]">
                   <span className="text-slate-500">SCENARIO:</span>
-                  <span className="font-bold text-slate-100 uppercase">{faultType.replace('_', ' ')}</span>
+                  <span className="font-bold text-slate-100 uppercase">{faultType.replace(/_/g, ' ')}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-[#162035]">
                   <span className="text-slate-500">SEVERITY:</span>
@@ -185,6 +230,26 @@ export const WhatIfLabView: React.FC = () => {
                   <span className="text-slate-500">HEALTH DEGRADATION:</span>
                   <span className="font-bold text-rose-400">{uav3dState.engineHealth}%</span>
                 </div>
+                {uav3dState.electricalHealth !== undefined && (
+                  <div className="flex justify-between py-1 border-b border-[#162035]">
+                    <span className="text-slate-500">ELECTRICAL HEALTH:</span>
+                    <span className={`font-bold ${uav3dState.electricalHealth > 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {uav3dState.electricalHealth}%
+                    </span>
+                  </div>
+                )}
+                {uav3dState.busVoltage !== undefined && (
+                  <div className="flex justify-between py-1 border-b border-[#162035]">
+                    <span className="text-slate-500">BUS VOLTAGE:</span>
+                    <span className="text-slate-100 font-bold">{uav3dState.busVoltage.toFixed(2)} V</span>
+                  </div>
+                )}
+                {uav3dState.batterySoc !== undefined && (
+                  <div className="flex justify-between py-1 border-b border-[#162035]">
+                    <span className="text-slate-500">BATTERY SOC:</span>
+                    <span className="text-[#38bdf8] font-bold">{uav3dState.batterySoc.toFixed(1)}%</span>
+                  </div>
+                )}
                 {uav3dState.rulHours !== undefined && (
                   <div className="flex justify-between py-1 border-b border-[#162035]">
                     <span className="text-slate-500">RUL IMPACT:</span>
@@ -204,29 +269,70 @@ export const WhatIfLabView: React.FC = () => {
         </div>
       )}
 
-      {/* Results Comparison Chart */}
+      {/* Results Comparison Charts */}
       {simulationData && (
-        <div className="eng-panel p-4 space-y-2">
-          <div className="border-b border-[#162035] pb-2 font-sans">
+        <div className="eng-panel p-4 space-y-3">
+          <div className="border-b border-[#162035] pb-2 font-sans flex items-center justify-between">
             <span className="font-bold text-xs uppercase text-slate-200">
-              HEALTH & TEMPERATURE DIVERGENCE TRAJECTORY (BASELINE VS DEGRADED)
+              WHAT-IF COMPARATIVE DIVERGENCE TRAJECTORY (T={faultStartSec}s INJECTION)
             </span>
+            <div className="flex items-center gap-1 bg-[#0c1224] p-0.5 rounded border border-[#162035] text-[10px] font-sans">
+              <button
+                onClick={() => setActiveTab('electrical')}
+                className={`px-2.5 py-1 rounded font-bold uppercase transition ${
+                  activeTab === 'electrical' ? 'bg-[#0284c7] text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                ELECTRICAL POWER & SOC
+              </button>
+              <button
+                onClick={() => setActiveTab('thermal')}
+                className={`px-2.5 py-1 rounded font-bold uppercase transition ${
+                  activeTab === 'thermal' ? 'bg-[#0284c7] text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                ENGINE HEALTH & THERMAL
+              </button>
+            </div>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#162035" />
-                <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={{ backgroundColor: '#090e1c', borderColor: '#212f4d', fontSize: '11px', color: '#f1f5f9' }} />
-                <Legend />
-                <Line type="monotone" dataKey="health_base" name="Nominal Baseline Health %" stroke="#10b981" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="health_deg" name="Fault Profile Health %" stroke="#ef4444" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="egt_deg" name="Degraded EGT (°C)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {activeTab === 'electrical' ? (
+            <div className="space-y-3">
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#162035" />
+                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#090e1c', borderColor: '#212f4d', fontSize: '11px', color: '#f1f5f9' }} />
+                    <Legend />
+                    <Line type="monotone" dataKey="alt_pwr_base" name="Baseline Alternator Gen (W)" stroke="#38bdf8" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
+                    <Line type="monotone" dataKey="alt_pwr_deg" name="Degraded Alternator Gen (W)" stroke="#ef4444" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="soc_deg" name="Battery SOC (%)" stroke="#10b981" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="bus_v_deg" name="DC Bus Voltage (V)" stroke="#f59e0b" strokeWidth={1.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="p-2.5 bg-[#090e1c] rounded border border-[#162035] text-[11px] text-slate-300">
+                <strong className="text-amber-400">Physics Coupling Note:</strong> At t &lt; {faultStartSec}s, normal operation prevails. At t = {faultStartSec}s, fault ramp initiates: alternator generation drops, causing a power deficit where the battery immediately steps in to supply discharge current, resulting in progressive SOC decline and bus voltage sag.
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#162035" />
+                  <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
+                  <YAxis stroke="#64748b" tick={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#090e1c', borderColor: '#212f4d', fontSize: '11px', color: '#f1f5f9' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="health_base" name="Nominal Baseline Health %" stroke="#10b981" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="health_deg" name="Fault Profile Health %" stroke="#ef4444" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="egt_deg" name="Degraded EGT (°C)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
     </div>

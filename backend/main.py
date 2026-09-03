@@ -47,9 +47,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AeroTwin Digital Twin Engine Monitoring API",
-    description="SIH 26054 — Real-time telemetry, physics baseline models, digital twin, fault diagnosis, and RUL estimation.",
-    version="1.0.0",
+    title="AeroTwin Digital Twin Engine & Electrical Subsystem API",
+    description="SIH 26054 — Real-time telemetry, physics electrical baseline, digital twin, fault diagnosis, and RUL estimation.",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -106,6 +106,21 @@ def reset_mission(seed: int = 42):
     return mission_service.step_simulation()
 
 
+@app.post("/api/mission/demo/chain", response_model=DigitalTwinState)
+def run_electrical_demo_chain():
+    """
+    Deterministic demonstration scenario:
+    NORMAL -> Alternator degradation -> Battery compensates -> Battery discharge increases ->
+    SOC decreases -> Voltage becomes unstable -> Electrical Health decreases -> Alert generated -> Maintenance advisory generated
+    """
+    req = FaultInjectionRequest(
+        fault_type=FaultType.ALTERNATOR_OUTPUT_DEGRADATION,
+        severity=0.85,
+        duration_s=180.0
+    )
+    return mission_service.inject_fault(req)
+
+
 class ControlSpeedRequest(BaseModel):
     speed: float = 1.0
 
@@ -150,24 +165,35 @@ def run_what_if_scenario(req: WhatIfRequest):
 
 @app.get("/api/3d/state")
 def get_3d_uav_state():
-    """Returns simplified JSON state for the Three.js 3D UAV model component."""
+    """Returns state for the Three.js 3D UAV model component with electrical subsystem targets."""
     if not mission_service.telemetry_history:
         state = mission_service.step_simulation()
     else:
         state = mission_service.telemetry_history[-1]
 
+    elec = state.observed.electrical
     return {
         "engineHealth": state.overall_health_score,
         "engineStatus": state.status,
         "missionPhase": state.mission_phase,
         "activeFault": state.active_fault,
         "activeAlert": state.alerts[0].candidate_fault if state.alerts else "None",
+        "faultSeverity": state.fault_severity,
         "rpm": state.observed.rpm,
         "cht": state.observed.cht_c,
         "egt": state.observed.egt_c,
         "oilPressure": state.observed.oil_pressure_psi,
         "vibration": state.observed.vibration_g,
-        "residualDistance": state.residuals.mahalanobis_distance
+        "residualDistance": state.residuals.mahalanobis_distance,
+        # Electrical Subsystem specific parameters
+        "electricalHealth": state.subsystem_health.electrical,
+        "busVoltage": state.observed.battery_volts,
+        "batterySoc": elec.battery.state_of_charge if elec else 92.0,
+        "batteryCurrent": elec.battery.current if elec else 0.0,
+        "batteryTemp": elec.battery.temperature if elec else 22.0,
+        "batteryStatus": elec.battery.status if elec else "NORMAL",
+        "alternatorStatus": elec.alternator.status if elec else "NORMAL",
+        "alternatorPower": elec.alternator.output_power_w if elec else 840.0
     }
 
 
@@ -176,7 +202,6 @@ async def websocket_telemetry_endpoint(websocket: WebSocket):
     await mission_service.connect_websocket(websocket)
     try:
         while True:
-            # Keep WebSocket connection alive and process incoming control pings
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")

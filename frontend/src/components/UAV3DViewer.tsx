@@ -65,6 +65,7 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   // Raycasting & Material Hover Cache
   const hoveredMaterialCache = useRef<{ mesh: THREE.Mesh; origEmissive: THREE.Color } | null>(null);
   const selectedMaterialCache = useRef<{ mesh: THREE.Mesh; origEmissive: THREE.Color } | null>(null);
+  const faultHighlightCache = useRef<{ mesh: THREE.Mesh; origEmissive: THREE.Color }[]>([]);
 
   // Map Mesh/Node Name or Object Position to Catalog Component
   const mapMeshToComponent = (object: THREE.Object3D): UAVComponentInfo | null => {
@@ -93,6 +94,9 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
       if (name.includes('gear')) return UAV_COMPONENT_CATALOG.landingGear;
       if (name.includes('antenna')) return UAV_COMPONENT_CATALOG.antennas;
       if (name.includes('sensor')) return UAV_COMPONENT_CATALOG.sensors;
+      if (name.includes('battery') || name.includes('comp_battery')) return UAV_COMPONENT_CATALOG.battery;
+      if (name.includes('alternator') || name.includes('generator')) return UAV_COMPONENT_CATALOG.alternator;
+      if (name.includes('power') || name.includes('bus')) return UAV_COMPONENT_CATALOG.powerDistributionBus;
       if (name.includes('fuselage') || name.includes('body')) return UAV_COMPONENT_CATALOG.fuselage;
 
       // Internal component names
@@ -112,6 +116,11 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     if (worldPos.x < -2.2 && worldPos.y > 1.4) return UAV_COMPONENT_CATALOG.horizontalStabilizer;
     if (worldPos.x < -2.2 && worldPos.y > 0.8) return UAV_COMPONENT_CATALOG.verticalStabilizer;
     if (Math.abs(worldPos.z) > 2.2) return worldPos.z > 0 ? UAV_COMPONENT_CATALOG.wingRight : UAV_COMPONENT_CATALOG.wingLeft;
+    
+    // In interior/cutaway mode, map forward fuselage to Battery and engine accessory area to Alternator
+    if (worldPos.x > 0.1 && worldPos.x < 1.1 && Math.abs(worldPos.z) < 0.6) return UAV_COMPONENT_CATALOG.battery;
+    if (worldPos.x < -0.3 && worldPos.x > -1.0 && worldPos.z > 0.1 && worldPos.z < 0.8) return UAV_COMPONENT_CATALOG.alternator;
+
     if (worldPos.x < -0.2 && Math.abs(worldPos.z) < 1.0) return UAV_COMPONENT_CATALOG.engine;
     if (worldPos.y < -0.4) return UAV_COMPONENT_CATALOG.landingGear;
 
@@ -432,12 +441,33 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
 
   // Auto-Focus Camera & Highlight Component when Fault Scenario is Triggered
   useEffect(() => {
-    if (!state || !state.activeFault || state.activeFault === 'none') return;
+    // 1. Restore any previous localized fault highlights
+    if (faultHighlightCache.current.length > 0) {
+      faultHighlightCache.current.forEach(({ mesh, origEmissive }) => {
+        if (mesh && mesh.material && 'emissive' in mesh.material) {
+          (mesh.material as THREE.MeshStandardMaterial).emissive.copy(origEmissive);
+        }
+      });
+      faultHighlightCache.current = [];
+    }
+
+    if (!state || !state.activeFault || state.activeFault === 'none') {
+      return;
+    }
 
     let targetComp: UAVComponentInfo | null = null;
     const f = state.activeFault.toLowerCase();
 
-    if (f.includes('misfire') || f.includes('overheating')) {
+    if (f.includes('battery')) {
+      targetComp = UAV_COMPONENT_CATALOG.battery;
+      setViewMode('cutaway');
+    } else if (f.includes('alternator') || f.includes('charging')) {
+      targetComp = UAV_COMPONENT_CATALOG.alternator;
+      setViewMode('cutaway');
+    } else if (f.includes('load_surge') || f.includes('electrical')) {
+      targetComp = UAV_COMPONENT_CATALOG.powerDistributionBus;
+      setViewMode('cutaway');
+    } else if (f.includes('misfire') || f.includes('overheating')) {
       targetComp = viewMode === 'interior' ? UAV_COMPONENT_CATALOG.engineBlock : UAV_COMPONENT_CATALOG.engine;
     } else if (f.includes('injector')) {
       targetComp = viewMode === 'interior' ? UAV_COMPONENT_CATALOG.fuelSystem : UAV_COMPONENT_CATALOG.engine;
@@ -452,8 +482,40 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     if (targetComp) {
       setSelectedComponent(targetComp);
       handleFocusComponent(targetComp);
+
+      // Localized Component Aerospace Highlighting:
+      // NORMAL -> Original RUSTOM appearance
+      // WARNING -> Subtle amber component highlight (0xf59e0b)
+      // DEGRADED -> Stronger localized amber/orange state (0xf97316)
+      // CRITICAL -> Localized red state (0xef4444)
+      const sev = state.faultSeverity || 0.5;
+      let highlightHex = 0xf59e0b; // Amber for warning
+      if (sev >= 0.7 || state.engineStatus === 'critical') {
+        highlightHex = 0xef4444; // Red for critical
+      } else if (sev >= 0.4 || state.engineStatus === 'warning') {
+        highlightHex = 0xf97316; // Amber-orange for degraded
+      }
+
+      const targetPos = new THREE.Vector3(...targetComp.position);
+      const root = uavRootRef.current;
+      if (root) {
+        root.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.material && 'emissive' in child.material) {
+            const childWorldPos = new THREE.Vector3();
+            child.getWorldPosition(childWorldPos);
+            // Apply localized highlight within 1.2m radius of subsystem node
+            if (childWorldPos.distanceTo(targetPos) < 1.35) {
+              faultHighlightCache.current.push({
+                mesh: child,
+                origEmissive: (child.material as THREE.MeshStandardMaterial).emissive.clone()
+              });
+              (child.material as THREE.MeshStandardMaterial).emissive.setHex(highlightHex);
+            }
+          }
+        });
+      }
     }
-  }, [state?.activeFault, state?.faultSeverity]);
+  }, [state?.activeFault, state?.faultSeverity, state?.engineStatus]);
 
   // Update Material Opacity based on View Mode (Exterior vs Interior vs Cutaway)
   useEffect(() => {
@@ -727,6 +789,104 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
             <div>
               <span className="text-slate-500 font-bold block uppercase text-[10px] mb-0.5">DESCRIPTION:</span>
               <p className="text-slate-300 text-[11px] leading-relaxed font-sans">{selectedComponent.description}</p>
+            </div>
+          )}
+
+          {selectedComponent.id === 'battery' && (
+            <div className="p-3 bg-[#060810] rounded border border-[#0284c7]/50 text-[11px] space-y-1.5 font-mono">
+              <div className="text-[10px] font-sans font-bold text-[#38bdf8] uppercase border-b border-[#162035] pb-1 flex justify-between">
+                <span>BATTERY SUBSYSTEM TELEMETRY</span>
+                <span className={state?.batteryStatus === 'CRITICAL' ? 'text-rose-400 font-bold' : state?.batteryStatus === 'LOW SOC' || state?.batteryStatus === 'DEGRADED' ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
+                  {state?.batteryStatus || 'NORMAL'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Voltage:</span>
+                <span className="text-slate-100 font-bold">{state?.busVoltage !== undefined ? state.busVoltage.toFixed(1) : '28.2'} V</span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Current:</span>
+                <span className={`font-bold ${(state?.batteryCurrent || 0) > 1.0 ? 'text-amber-400' : (state?.batteryCurrent || 0) < -0.5 ? 'text-cyan-400' : 'text-slate-200'}`}>
+                  {state?.batteryCurrent !== undefined ? state.batteryCurrent.toFixed(1) : '0.0'} A
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">SOC:</span>
+                <span className={`font-bold ${(state?.batterySoc || 92) < 25 ? 'text-rose-400' : (state?.batterySoc || 92) < 40 ? 'text-amber-400' : 'text-[#38bdf8]'}`}>
+                  {state?.batterySoc !== undefined ? state.batterySoc.toFixed(1) : '92.0'}%
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">SOH:</span>
+                <span className="text-emerald-400 font-bold">{state?.batterySoh !== undefined ? state.batterySoh.toFixed(1) : '98.5'}%</span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Temperature:</span>
+                <span className={`font-bold ${(state?.batteryTemp || 22) > 50 ? 'text-rose-400' : (state?.batteryTemp || 22) > 40 ? 'text-amber-400' : 'text-slate-200'}`}>
+                  {state?.batteryTemp !== undefined ? state.batteryTemp.toFixed(1) : '22.0'}°C
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Internal Resistance:</span>
+                <span className={`font-bold ${(state?.batteryRint || 18) > 40 ? 'text-rose-400' : 'text-amber-400'}`}>
+                  {state?.batteryRint !== undefined ? state.batteryRint.toFixed(1) : '18.0'} mΩ
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Fault:</span>
+                <span className="text-rose-400 font-bold">
+                  {state?.activeFault && state.activeFault !== 'none' && state.activeFault.includes('battery') ? state.activeFault.replace(/_/g, ' ') : 'None'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Severity:</span>
+                <span className="text-amber-400 font-bold">{state?.faultSeverity ? `${(state.faultSeverity * 100).toFixed(0)}%` : '0%'}</span>
+              </div>
+            </div>
+          )}
+
+          {selectedComponent.id === 'alternator' && (
+            <div className="p-3 bg-[#060810] rounded border border-[#0284c7]/50 text-[11px] space-y-1.5 font-mono">
+              <div className="text-[10px] font-sans font-bold text-[#38bdf8] uppercase border-b border-[#162035] pb-1 flex justify-between">
+                <span>ALTERNATOR SUBSYSTEM TELEMETRY</span>
+                <span className={state?.alternatorStatus === 'FAILED' ? 'text-rose-400 font-bold' : state?.alternatorStatus === 'DEGRADED' || state?.alternatorStatus === 'UNDERPERFORMING' ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
+                  {state?.alternatorStatus || 'NORMAL'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Output Voltage:</span>
+                <span className="text-slate-100 font-bold">{state?.busVoltage !== undefined ? state.busVoltage.toFixed(1) : '28.2'} V</span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Output Current:</span>
+                <span className="text-slate-100 font-bold">{state?.alternatorCurrent !== undefined ? state.alternatorCurrent.toFixed(1) : '30.0'} A</span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Output Power:</span>
+                <span className="text-[#38bdf8] font-bold">{state?.alternatorPower !== undefined ? state.alternatorPower.toFixed(0) : '846'} W</span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Temperature:</span>
+                <span className={`font-bold ${(state?.alternatorTemp || 45) > 105 ? 'text-rose-400' : 'text-slate-200'}`}>
+                  {state?.alternatorTemp !== undefined ? state.alternatorTemp.toFixed(1) : '45.0'}°C
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Regulation Error:</span>
+                <span className={`font-bold ${(state?.alternatorRegError || 0) > 5 ? 'text-rose-400' : 'text-amber-400'}`}>
+                  {state?.alternatorRegError !== undefined ? state.alternatorRegError.toFixed(1) : '0.2'}%
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-[#141c2e] pb-1">
+                <span className="text-slate-400">Health:</span>
+                <span className="text-emerald-400 font-bold">{state?.alternatorHealth !== undefined ? state.alternatorHealth.toFixed(1) : '98.0'}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Fault:</span>
+                <span className="text-rose-400 font-bold">
+                  {state?.activeFault && state.activeFault !== 'none' && (state.activeFault.includes('alternator') || state.activeFault.includes('charging')) ? state.activeFault.replace(/_/g, ' ') : 'None'}
+                </span>
+              </div>
             </div>
           )}
 

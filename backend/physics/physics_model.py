@@ -1,17 +1,19 @@
 import math
 from backend.schemas.telemetry import TelemetryRecord, ResidualRecord, MissionPhase
+from backend.physics.electrical_model import ElectricalSubsystemPhysicsModel
 
 
 class PhysicsEngineModel:
     """
     Physics-Informed Expected-State Model for MALE UAV Aero-Piston Engines.
-    Uses thermodynamics, barometric lapse, throttle-load curves, and engine heat balance
-    to derive baseline expected telemetry signals.
+    Uses thermodynamics, barometric lapse, throttle-load curves, engine heat balance,
+    and coupled electrical subsystem power balance to derive baseline expected telemetry signals.
     """
 
     def __init__(self, displacement_cc: float = 2500.0, max_rpm: float = 6200.0):
         self.displacement_cc = displacement_cc
         self.max_rpm = max_rpm
+        self.electrical_model = ElectricalSubsystemPhysicsModel()
 
     def compute_expected(
         self,
@@ -59,8 +61,15 @@ class PhysicsEngineModel:
         # Expected Injection Timing (° BTDC): Advances at higher RPM and lighter load
         expected_injection_timing = 12.0 + (expected_rpm / self.max_rpm) * 16.0 - throttle * 4.0
 
-        # Expected Battery Volts: Alternator output stabilized above idle
-        expected_battery_volts = 28.2 if expected_rpm > 1800.0 else (24.0 + (expected_rpm / 1800.0) * 4.2)
+        # Expected Electrical Subsystem Telemetry
+        expected_elec = self.electrical_model.step(
+            dt_seconds=0.0,
+            engine_rpm=expected_rpm,
+            phase=mission_phase,
+            ambient_temp_c=ambient_temp_c,
+            altitude_ft=altitude_ft
+        )
+        expected_battery_volts = expected_elec.system.bus_voltage
 
         return TelemetryRecord(
             timestamp=timestamp,
@@ -79,13 +88,15 @@ class PhysicsEngineModel:
             vibration_g=round(expected_vibration, 3),
             injection_timing_deg=round(expected_injection_timing, 1),
             battery_volts=round(expected_battery_volts, 2),
+            electrical=expected_elec,
             source_type="physics_expected",
-            schema_version="1.0"
+            schema_version="2.0"
         )
 
     def calculate_residuals(self, observed: TelemetryRecord, expected: TelemetryRecord) -> ResidualRecord:
         """
         Calculate vector residuals (Observed - Expected) and Mahalanobis statistical distance.
+        Includes mechanical, combustion, thermal, and electrical signals.
         """
         delta_rpm = observed.rpm - expected.rpm
         delta_cht = observed.cht_c - expected.cht_c
@@ -97,6 +108,16 @@ class PhysicsEngineModel:
         delta_timing = observed.injection_timing_deg - expected.injection_timing_deg
         delta_volts = observed.battery_volts - expected.battery_volts
 
+        # Electrical specific residuals
+        delta_bus_volts = delta_volts
+        delta_batt_curr = 0.0
+        delta_alt_power = 0.0
+
+        if observed.electrical and expected.electrical:
+            delta_bus_volts = observed.electrical.system.bus_voltage - expected.electrical.system.bus_voltage
+            delta_batt_curr = observed.electrical.battery.current - expected.electrical.battery.current
+            delta_alt_power = observed.electrical.alternator.output_power_w - expected.electrical.alternator.output_power_w
+
         # Standard deviations for normalization (nominal variation tolerances)
         norm_scores = [
             (delta_rpm / 45.0) ** 2,
@@ -107,7 +128,9 @@ class PhysicsEngineModel:
             (delta_fuel / 1.2) ** 2,
             (delta_vib / 0.15) ** 2,
             (delta_timing / 1.5) ** 2,
-            (delta_volts / 0.4) ** 2
+            (delta_volts / 0.4) ** 2,
+            (delta_batt_curr / 3.0) ** 2 if delta_batt_curr != 0.0 else 0.0,
+            (delta_alt_power / 40.0) ** 2 if delta_alt_power != 0.0 else 0.0
         ]
         mahalanobis_dist = math.sqrt(sum(norm_scores))
 
@@ -121,5 +144,8 @@ class PhysicsEngineModel:
             vibration_g=round(delta_vib, 3),
             injection_timing_deg=round(delta_timing, 1),
             battery_volts=round(delta_volts, 2),
+            bus_voltage=round(delta_bus_volts, 2),
+            battery_current_a=round(delta_batt_curr, 2),
+            alternator_power_w=round(delta_alt_power, 1),
             mahalanobis_distance=round(mahalanobis_dist, 3)
         )

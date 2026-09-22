@@ -212,7 +212,10 @@ class DigitalTwinService:
             ambient_temp_c=observed.ambient_temp_c,
             mission_phase=observed.mission_phase,
             engine_id=observed.engine_id,
-            mission_id=observed.mission_id
+            mission_id=observed.mission_id,
+            aircraft_id=observed.aircraft_id,
+            callsign=observed.callsign,
+            model_name=observed.model_name
         )
 
         # 2. Compute residual vector deltas
@@ -261,6 +264,9 @@ class DigitalTwinService:
 
         return DigitalTwinState(
             timestamp=observed.timestamp,
+            aircraft_id=observed.aircraft_id,
+            callsign=observed.callsign,
+            model_name=observed.model_name,
             engine_id=observed.engine_id,
             mission_id=observed.mission_id,
             mission_phase=observed.mission_phase,
@@ -274,5 +280,6 @@ class DigitalTwinService:
             status=status,
             alerts=alerts,
             rul=rul_estimate,
-            affected_component=affected_component
+            affected_component=affected_component,
+            coordinates=observed.coordinates
         )

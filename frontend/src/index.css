@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Aerospace Industrial Engineering Color System */
-  --bg-app: #060810;
-  --bg-surface: #0a0f1d;
-  --bg-surface-elevated: #101728;
-  --bg-surface-active: #141e34;
+  /* Aerospace Modern Glassmorphic Engineering Color System */
+  --bg-app: #070a12;
+  --bg-surface: rgba(10, 15, 29, 0.75);
+  --bg-surface-elevated: rgba(16, 23, 40, 0.85);
+  --bg-surface-active: rgba(20, 30, 52, 0.9);
   
-  --border-subtle: #1a2438;
-  --border-strong: #283754;
+  --border-subtle: rgba(38, 55, 84, 0.5);
+  --border-strong: rgba(56, 189, 248, 0.25);
   --border-accent: #0284c7;
 
   --text-primary: #f8fafc;
@@ -27,6 +27,10 @@
 @layer base {
   body {
     background-color: var(--bg-app);
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(2, 132, 199, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.3) 0px, transparent 100%);
     color: var(--text-primary);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -49,25 +53,45 @@
   background: #0284c7;
 }
 
-/* Structured Engineering Panel Styling */
+/* Glassmorphism & Structured Panel Styling */
 .eng-panel {
-  background-color: #0a0f1d;
-  border: 1px solid #1a2438;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.4);
+  background-color: rgba(10, 15, 29, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(38, 55, 84, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.eng-panel:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 6px 24px -2px rgba(2, 132, 199, 0.15);
 }
 
 .eng-panel-elevated {
-  background-color: #101728;
-  border: 1px solid #283754;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  background-color: rgba(16, 23, 40, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
 }
 
 .eng-header {
-  border-bottom: 1px solid #1a2438;
-  padding: 8px 14px;
-  background-color: #0e1526;
+  border-bottom: 1px solid rgba(38, 55, 84, 0.6);
+  padding: 10px 16px;
+  background-color: rgba(14, 21, 38, 0.8);
+}
+
+/* Glassmorphism helper class */
+.glass-panel {
+  background-color: rgba(10, 15, 29, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(38, 55, 84, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
 }
 
 /* Structured Data Grid & Table */
@@ -79,55 +103,75 @@
 }
 
 .eng-table th {
-  background-color: #0c1222;
-  color: #64748b;
+  background-color: rgba(12, 18, 34, 0.9);
+  color: #94a3b8;
   font-weight: 600;
   text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid #1a2438;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(38, 55, 84, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .eng-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #141c2e;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(20, 28, 46, 0.6);
   color: #cbd5e1;
 }
 
 .eng-table tr:hover {
-  background-color: #10182b;
+  background-color: rgba(16, 24, 43, 0.8);
 }
 
-/* Restrained Semantic Status Indicators */
+/* Modern Glowing Semantic Status Badges */
 .eng-badge-success {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(16, 185, 129, 0.12);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
 .eng-badge-warning {
-  background-color: rgba(245, 158, 11, 0.1);
+  background-color: rgba(245, 158, 11, 0.12);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
 }
 
 .eng-badge-critical {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(239, 68, 68, 0.15);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  animation: pulse-glow 2s infinite ease-in-out;
 }
 
 .eng-badge-info {
-  background-color: rgba(2, 132, 199, 0.1);
+  background-color: rgba(2, 132, 199, 0.12);
   color: #38bdf8;
-  border: 1px solid rgba(2, 132, 199, 0.25);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.15);
 }
 
-/* Backward compatibility helper class */
-.glass-panel {
-  background-color: #0a0f1d;
-  border: 1px solid #1a2438;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.4);
+/* Neon Glow Helper Effects */
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
 }
+
+.glow-emerald {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+}
+
+.glow-rose {
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.35);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.5);
+  }
+}
+

@@ -20,10 +20,12 @@ import {
   Activity,
   Layers,
   Radio,
-  Crosshair
+  Crosshair,
+  Plane,
+  RadioTower
 } from 'lucide-react';
 import { ScreenId } from './Navigation';
-import { DigitalTwinState } from '../types/telemetry';
+import { DigitalTwinState, UAVSummary } from '../types/telemetry';
 
 interface SidebarProps {
   currentScreen: ScreenId;
@@ -33,6 +35,9 @@ interface SidebarProps {
   onToggleCollapse: () => void;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
+  selectedUavId?: string;
+  fleet?: UAVSummary[];
+  onSelectUav?: (uavId: string) => void;
 }
 
 interface NavSection {
@@ -53,10 +58,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
   isMobileOpen,
-  onCloseMobile
+  onCloseMobile,
+  selectedUavId = "UAV-RUST-01",
+  fleet = [],
+  onSelectUav
 }) => {
   // Collapsible accordion section states
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
+    fleet: true,
     mission: true,
     digitalTwin: true,
     engine: true,
@@ -99,32 +108,90 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="font-bold text-xs tracking-wider text-slate-100 uppercase font-mono">
                 AERIS CONSOLE
               </h3>
-              <p className="text-[10px] text-slate-400 font-sans leading-tight">
-                Aero Engine Reliability & Intelligence System
+              <p className="text-[10px] text-slate-400 font-sans leading-tight truncate max-w-[170px]">
+                {state?.callsign || "Garuda-1"} • {state?.model_name || "DRDO RUSTOM-II"}
               </p>
-              <p className="text-[9px] text-[#38bdf8] font-mono mt-0.5 font-semibold">DRDO RUSTOM</p>
+              <p className="text-[9px] text-[#38bdf8] font-mono mt-0.5 font-semibold">
+                SQUADRON AIRFRAME: {selectedUavId}
+              </p>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              state?.status === 'critical' ? 'bg-rose-500 animate-ping' :
+              state?.status === 'warning' ? 'bg-amber-400' : 'bg-emerald-400'
+            }`} />
           </div>
         )}
 
         {/* Scrollable Navigation Category List */}
         <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-3 text-xs font-sans select-none">
           {/* 1. Primary Dashboard Item */}
-          <div>
+          <div className="space-y-1">
             <button
               onClick={() => handleNavClick('overview')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 ${
                 currentScreen === 'overview'
-                  ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
+                  ? 'bg-cyan-500/15 text-cyan-300 border-l-2 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)] font-semibold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
               }`}
               title="Dashboard Overview"
             >
-              <LayoutDashboard size={16} className="shrink-0 text-[#38bdf8]" />
-              {!collapsed && <span>Dashboard</span>}
+              <LayoutDashboard size={16} className="shrink-0 text-cyan-400" />
+              {!collapsed && <span>Dashboard Overview</span>}
+            </button>
+
+            {/* Tactical Fleet Command Item */}
+            <button
+              onClick={() => handleNavClick('fleet')}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium transition duration-200 ${
+                currentScreen === 'fleet'
+                  ? 'bg-cyan-500/15 text-cyan-300 border-l-2 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)] font-semibold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+              }`}
+              title="Multi-UAV Fleet Command & Tactical Radar"
+            >
+              <div className="flex items-center gap-3">
+                <Plane size={16} className="shrink-0 text-sky-400" />
+                {!collapsed && <span>Fleet Command</span>}
+              </div>
+              {!collapsed && (
+                <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-cyan-950 text-cyan-300 border border-cyan-700/50">
+                  {fleet.length || 5} UAVs
+                </span>
+              )}
             </button>
           </div>
+
+          {/* Mini Airframe Quick Switcher (Inside Sidebar) */}
+          {!collapsed && fleet.length > 0 && (
+            <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 font-bold block px-1">
+                Active Airframe Focus
+              </span>
+              <div className="grid grid-cols-2 gap-1">
+                {fleet.map((uav) => {
+                  const isCur = uav.aircraft_id === selectedUavId;
+                  return (
+                    <button
+                      key={uav.aircraft_id}
+                      onClick={() => onSelectUav?.(uav.aircraft_id)}
+                      className={`px-2 py-1 rounded text-[10px] font-mono flex items-center justify-between transition ${
+                        isCur
+                          ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/60 font-bold shadow-sm'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title={`${uav.callsign} (${uav.model_name})`}
+                    >
+                      <span className="truncate">{uav.callsign}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        uav.status === 'critical' ? 'bg-rose-500' :
+                        uav.status === 'warning' ? 'bg-amber-400' : 'bg-emerald-400'
+                      }`} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 2. Mission Section (Collapsible Accordion) */}
           <div>
@@ -133,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => toggleSection('mission')}
                 className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-slate-500 hover:text-slate-300"
               >
-                <span>Mission</span>
+                <span>Mission & Sortie</span>
                 <ChevronDown size={14} className={`transition-transform duration-200 ${openSections.mission ? '' : '-rotate-90'}`} />
               </button>
             ) : (
@@ -142,17 +209,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {(!collapsed ? openSections.mission : true) && (
               <div className="space-y-1 mt-1">
-                <button
-                  onClick={() => handleNavClick('overview')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${
-                    currentScreen === 'overview' ? 'bg-[#0e1e38] text-[#38bdf8] border-l-2 border-[#0284c7] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#0e1526]'
-                  }`}
-                  title="Mission Overview"
-                >
-                  <Compass size={16} className="shrink-0" />
-                  {!collapsed && <span>Mission Overview</span>}
-                </button>
-
                 <button
                   onClick={() => handleNavClick('control')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded font-medium transition ${

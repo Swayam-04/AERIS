@@ -10,12 +10,14 @@ import {
   GitCompare,
   BarChart3,
   Radio,
-  Gauge
+  Gauge,
+  Plane
 } from 'lucide-react';
 import { DigitalTwinState } from '../types/telemetry';
 
 export type ScreenId =
   | 'overview'
+  | 'fleet'
   | 'digital_twin'
   | 'engine_fault_map'
   | 'telemetry'
@@ -42,6 +44,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const navItems = [
     { id: 'overview' as ScreenId, label: 'Overview', icon: Activity },
+    { id: 'fleet' as ScreenId, label: 'Fleet Command', icon: Plane },
     { id: 'digital_twin' as ScreenId, label: 'Digital Twin 3D', icon: Box },
     { id: 'engine_fault_map' as ScreenId, label: 'Engine Fault Map', icon: Cpu },
     { id: 'telemetry' as ScreenId, label: 'Telemetry Grid', icon: Gauge },

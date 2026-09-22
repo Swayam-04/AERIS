@@ -23,7 +23,7 @@ interface UAV3DViewerProps {
   showOverlay?: boolean;
 }
 
-export type ViewMode = 'exterior' | 'interior' | 'cutaway';
+export type ViewMode = 'exterior' | 'interior' | 'cutaway' | 'exploded';
 
 export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   state,
@@ -42,11 +42,14 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
   // Mesh & Group References
   const uavRootRef = useRef<THREE.Group | null>(null);
   const exteriorShellRef = useRef<THREE.Group | null>(null);
+  const internalSubsystemsGroupRef = useRef<THREE.Group | null>(null);
   const customModelSceneRef = useRef<THREE.Group | null>(null);
+  const explodedMeshMapRef = useRef<Map<THREE.Object3D, { basePos: THREE.Vector3; offsetDir: THREE.Vector3 }>>(new Map());
 
   // Interaction State
   const [viewMode, setViewMode] = useState<ViewMode>('exterior');
   const [cutawayOpacity, setCutawayOpacity] = useState<number>(0.25);
+  const [explosionFactor, setExplosionFactor] = useState<number>(0.7);
   const [selectedComponent, setSelectedComponent] = useState<UAVComponentInfo | null>(null);
   const [hoveredNodeName, setHoveredNodeName] = useState<string | null>(null);
   const [mouseScreenPos, setMouseScreenPos] = useState<{ x: number; y: number } | null>(null);
@@ -220,6 +223,149 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     exteriorShellRef.current = exteriorShellGroup;
     uavRootGroup.add(exteriorShellGroup);
 
+    // =========================================================================
+    // INTERNAL INFRASTRUCTURE & SUBSYSTEM ASSEMBLY (Cylinders, Battery, Alternator, Avionics)
+    // =========================================================================
+    const internalSubsystemsGroup = new THREE.Group();
+    internalSubsystemsGroup.name = "internalSubsystems";
+    internalSubsystemsGroupRef.current = internalSubsystemsGroup;
+    uavRootGroup.add(internalSubsystemsGroup);
+
+    explodedMeshMapRef.current.clear();
+
+    // 1. ENGINE BLOCK & HORIZONTALLY OPPOSED 4-CYLINDERS (Lycoming O-320)
+    const engineGroup = new THREE.Group();
+    engineGroup.name = "comp_engineblock";
+    engineGroup.position.set(-0.6, 0.1, 0.0);
+
+    const crankcaseGeo = new THREE.BoxGeometry(1.4, 0.7, 0.8);
+    const crankcaseMat = new THREE.MeshStandardMaterial({ color: '#334155', metalness: 0.85, roughness: 0.25 });
+    const crankcaseMesh = new THREE.Mesh(crankcaseGeo, crankcaseMat);
+    engineGroup.add(crankcaseMesh);
+
+    // 4 Cylinders (Starboard #1 & #3, Port #2 & #4)
+    const cylPositions = [
+      { id: 'cylinder_1', x: 0.35, z: 0.7, dir: 1 },
+      { id: 'cylinder_2', x: 0.35, z: -0.7, dir: -1 },
+      { id: 'cylinder_3', x: -0.35, z: 0.7, dir: 1 },
+      { id: 'cylinder_4', x: -0.35, z: -0.7, dir: -1 }
+    ];
+
+    cylPositions.forEach((cyl) => {
+      const cylSubGroup = new THREE.Group();
+      cylSubGroup.name = `comp_${cyl.id}`;
+      cylSubGroup.position.set(cyl.x, 0.0, cyl.z * 0.5);
+
+      const barrelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.65, 20);
+      barrelGeo.rotateX(Math.PI / 2);
+      const barrelMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.9, roughness: 0.2 });
+      const barrelMesh = new THREE.Mesh(barrelGeo, barrelMat);
+      cylSubGroup.add(barrelMesh);
+
+      // Cooling Fins
+      for (let finZ = 0.1; finZ <= 0.35; finZ += 0.07) {
+        const finGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.015, 20);
+        finGeo.rotateX(Math.PI / 2);
+        const finMat = new THREE.MeshStandardMaterial({ color: '#475569', metalness: 0.8, roughness: 0.3 });
+        const finMesh = new THREE.Mesh(finGeo, finMat);
+        finMesh.position.z = cyl.dir * finZ;
+        cylSubGroup.add(finMesh);
+      }
+
+      // Cylinder Head & Spark Plugs
+      const headGeo = new THREE.BoxGeometry(0.48, 0.42, 0.28);
+      const headMat = new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.8, roughness: 0.2 });
+      const headMesh = new THREE.Mesh(headGeo, headMat);
+      headMesh.position.z = cyl.z * 0.75;
+      cylSubGroup.add(headMesh);
+
+      engineGroup.add(cylSubGroup);
+      explodedMeshMapRef.current.set(cylSubGroup, {
+        basePos: cylSubGroup.position.clone(),
+        offsetDir: new THREE.Vector3(0, 0.2, cyl.dir * 1.5)
+      });
+    });
+
+    internalSubsystemsGroup.add(engineGroup);
+    explodedMeshMapRef.current.set(engineGroup, {
+      basePos: engineGroup.position.clone(),
+      offsetDir: new THREE.Vector3(-0.8, -0.4, 0)
+    });
+
+    // 2. 28V LITHIUM BATTERY SUBSYSTEM PACK
+    const batteryGroup = new THREE.Group();
+    batteryGroup.name = "comp_battery";
+    batteryGroup.position.set(0.6, 0.1, 0.0);
+
+    const battCaseGeo = new THREE.BoxGeometry(0.7, 0.4, 0.5);
+    const battCaseMat = new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.6, roughness: 0.2, emissive: '#0284c7', emissiveIntensity: 0.2 });
+    const battCaseMesh = new THREE.Mesh(battCaseGeo, battCaseMat);
+    batteryGroup.add(battCaseMesh);
+
+    // Glowing Cell Modules
+    for (let c = -0.2; c <= 0.2; c += 0.15) {
+      const cellGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 16);
+      const cellMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', emissive: '#38bdf8', emissiveIntensity: 0.5 });
+      const cellMesh = new THREE.Mesh(cellGeo, cellMat);
+      cellMesh.position.set(c, 0.05, 0.0);
+      batteryGroup.add(cellMesh);
+    }
+    internalSubsystemsGroup.add(batteryGroup);
+    explodedMeshMapRef.current.set(batteryGroup, {
+      basePos: batteryGroup.position.clone(),
+      offsetDir: new THREE.Vector3(1.2, 0.6, 0.8)
+    });
+
+    // 3. 70A ALTERNATOR POWER UNIT
+    const alternatorGroup = new THREE.Group();
+    alternatorGroup.name = "comp_alternator";
+    alternatorGroup.position.set(-1.1, -0.15, 0.45);
+
+    const altStatorGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.38, 20);
+    altStatorGeo.rotateZ(Math.PI / 2);
+    const altStatorMat = new THREE.MeshStandardMaterial({ color: '#f59e0b', metalness: 0.85, roughness: 0.25 });
+    const altStatorMesh = new THREE.Mesh(altStatorGeo, altStatorMat);
+    alternatorGroup.add(altStatorMesh);
+
+    const metalAlloyMat = new THREE.MeshStandardMaterial({ color: '#475569', metalness: 0.8, roughness: 0.3 });
+    const altPulleyGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 16);
+    altPulleyGeo.rotateZ(Math.PI / 2);
+    const altPulleyMesh = new THREE.Mesh(altPulleyGeo, metalAlloyMat);
+    altPulleyMesh.position.x = 0.22;
+    alternatorGroup.add(altPulleyMesh);
+
+    internalSubsystemsGroup.add(alternatorGroup);
+    explodedMeshMapRef.current.set(alternatorGroup, {
+      basePos: alternatorGroup.position.clone(),
+      offsetDir: new THREE.Vector3(-1.2, -0.6, 1.2)
+    });
+
+    // 4. AVIONICS & FLIGHT COMPUTER RACK
+    const avionicsGroup = new THREE.Group();
+    avionicsGroup.name = "comp_ecusystem";
+    avionicsGroup.position.set(0.1, 0.25, -0.2);
+
+    const ecuBoxGeo = new THREE.BoxGeometry(0.55, 0.25, 0.4);
+    const ecuBoxMat = new THREE.MeshStandardMaterial({ color: '#10b981', metalness: 0.7, roughness: 0.3, emissive: '#10b981', emissiveIntensity: 0.2 });
+    const ecuBoxMesh = new THREE.Mesh(ecuBoxGeo, ecuBoxMat);
+    avionicsGroup.add(ecuBoxMesh);
+
+    internalSubsystemsGroup.add(avionicsGroup);
+    explodedMeshMapRef.current.set(avionicsGroup, {
+      basePos: avionicsGroup.position.clone(),
+      offsetDir: new THREE.Vector3(0.0, 1.4, -1.2)
+    });
+
+    // 5. INTERNAL FUSELAGE STRUCTURAL BULKHEAD RINGS
+    for (let posX = -1.5; posX <= 1.5; posX += 0.6) {
+      const ringGeo = new THREE.TorusGeometry(0.65, 0.03, 12, 24);
+      ringGeo.rotateY(Math.PI / 2);
+      const ringMat = new THREE.MeshStandardMaterial({ color: '#334155', metalness: 0.9, roughness: 0.2 });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.position.x = posX;
+      internalSubsystemsGroup.add(ringMesh);
+    }
+
     // Setup GLTFLoader + DRACOLoader
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
@@ -237,6 +383,27 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
           exteriorShellGroup.visible = false;
           uavRootGroup.add(gltf.scene);
           setIsCustomModelLoaded(true);
+
+          // Populate exploded mesh positions for GLTF nodes
+          gltf.scene.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              const name = child.name.toLowerCase();
+              let dir = new THREE.Vector3(0, 0, 0);
+
+              if (name.includes('wing') && name.includes('right')) dir.set(0, 0, 1.8);
+              else if (name.includes('wing') && name.includes('left')) dir.set(0, 0, -1.8);
+              else if (name.includes('nose') || name.includes('propeller')) dir.set(2.2, 0.5, 0);
+              else if (name.includes('tail') || name.includes('rudder')) dir.set(-2.2, 1.0, 0);
+              else if (name.includes('cowling') || name.includes('fuselage')) dir.set(0, 1.8, 0);
+
+              if (dir.lengthSq() > 0) {
+                explodedMeshMapRef.current.set(child, {
+                  basePos: child.position.clone(),
+                  offsetDir: dir
+                });
+              }
+            }
+          });
 
           // Calculate bounding box and set camera bounds
           const box = new THREE.Box3().setFromObject(gltf.scene);
@@ -517,16 +684,18 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
     }
   }, [state?.activeFault, state?.faultSeverity, state?.engineStatus]);
 
-  // Update Material Opacity based on View Mode (Exterior vs Interior vs Cutaway)
+  // Update Material Opacity & Exploded Displacement based on View Mode (Exterior vs Interior vs Cutaway vs Exploded)
   useEffect(() => {
     const targetGroup = isCustomModelLoaded ? customModelSceneRef.current : exteriorShellRef.current;
     if (!targetGroup) return;
 
     let targetOpacity = 1.0;
     if (viewMode === 'interior') {
-      targetOpacity = 0.22;
+      targetOpacity = 0.18;
     } else if (viewMode === 'cutaway') {
       targetOpacity = cutawayOpacity;
+    } else if (viewMode === 'exploded') {
+      targetOpacity = 0.32;
     }
 
     targetGroup.traverse((child) => {
@@ -542,7 +711,16 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         }
       }
     });
-  }, [viewMode, cutawayOpacity, isCustomModelLoaded]);
+
+    // Apply Exploded Displacement Offsets
+    explodedMeshMapRef.current.forEach(({ basePos, offsetDir }, obj) => {
+      if (viewMode === 'exploded') {
+        obj.position.copy(basePos).addScaledVector(offsetDir, explosionFactor);
+      } else {
+        obj.position.copy(basePos);
+      }
+    });
+  }, [viewMode, cutawayOpacity, explosionFactor, isCustomModelLoaded]);
 
   // Fit Camera to View Bounding Box
   const handleFitToView = () => {
@@ -643,6 +821,17 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
         >
           [ CUTAWAY ]
         </button>
+
+        <button
+          onClick={() => setViewMode('exploded')}
+          className={`px-3 py-1 rounded font-semibold font-sans uppercase transition ${
+            viewMode === 'exploded'
+              ? 'bg-rose-600 text-white font-bold shadow-[0_0_10px_rgba(225,29,72,0.4)]'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-[#101728]'
+          }`}
+        >
+          [ EXPLODED ]
+        </button>
       </div>
 
       {/* Cutaway Opacity Slider */}
@@ -659,6 +848,23 @@ export const UAV3DViewer: React.FC<UAV3DViewerProps> = ({
             className="w-32 h-1.5 bg-[#1a2438] rounded appearance-none cursor-pointer accent-[#38bdf8]"
           />
           <span className="text-[#38bdf8] font-bold">{((1.0 - cutawayOpacity) * 100).toFixed(0)}%</span>
+        </div>
+      )}
+
+      {/* Exploded Distance Slider */}
+      {viewMode === 'exploded' && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-[#0a0f1d] px-3.5 py-1.5 rounded border border-rose-500/50 text-xs font-mono text-slate-200 shadow-lg">
+          <span className="text-rose-400 font-sans font-semibold">Explosion Distance:</span>
+          <input
+            type="range"
+            min="0.1"
+            max="1.5"
+            step="0.05"
+            value={explosionFactor}
+            onChange={(e) => setExplosionFactor(parseFloat(e.target.value))}
+            className="w-36 h-1.5 bg-slate-800 rounded appearance-none cursor-pointer accent-rose-500"
+          />
+          <span className="text-rose-400 font-bold">{((explosionFactor / 1.5) * 100).toFixed(0)}%</span>
         </div>
       )}
 

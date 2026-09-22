@@ -98,7 +98,9 @@ export const MissionControlView: React.FC<MissionControlViewProps> = ({
             <Sliders className="w-5 h-5 text-[#38bdf8]" />
             Mission Control & Fault Injection Console
           </h2>
-          <p className="text-xs text-slate-400">Interactive flight profile switcher and controlled fault scenario trigger with live RUSTOM 3D Digital Twin</p>
+          <p className="text-xs text-slate-400">
+            Active Airframe: <span className="text-cyan-400 font-bold">{state.callsign || 'Garuda-1'} ({state.model_name || 'DRDO RUSTOM-II'})</span> | Target-isolated fault injection and profile controls
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button

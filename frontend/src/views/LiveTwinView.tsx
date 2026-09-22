@@ -32,11 +32,16 @@ export const LiveTwinView: React.FC<LiveTwinViewProps> = ({ state, onSetPhase })
         <div>
           <h2 className="text-lg font-bold text-slate-100 font-sans tracking-wide flex items-center gap-2 uppercase">
             <Box className="w-5 h-5 text-[#38bdf8]" />
-            DRDO RUSTOM 3D Digital Twin Environment
+            {state.model_name || 'DRDO RUSTOM'} 3D Digital Twin Environment
           </h2>
-          <p className="text-xs text-slate-400">Aero Engine Reliability & Intelligence System | DRDO RUSTOM UAV (5.12m / 7.9m Scale | Lycoming O-320 Powerplant)</p>
+          <p className="text-xs text-slate-400">
+            Aero Engine Reliability & Intelligence System | {state.callsign || 'Garuda-1'} ({state.aircraft_id || 'UAV-RUST-01'}) | {state.engine_id || 'Lycoming O-320 Powerplant'}
+          </p>
         </div>
         <div className="flex items-center gap-2 text-xs">
+          <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
+            AIRFRAME: <strong className="text-cyan-400">{state.callsign || 'Garuda-1'}</strong>
+          </div>
           <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
             TWIN STREAM: <strong className="text-emerald-400">100% REALTIME</strong>
           </div>

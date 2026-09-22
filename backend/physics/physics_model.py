@@ -23,7 +23,10 @@ class PhysicsEngineModel:
         ambient_temp_c: float,
         mission_phase: MissionPhase,
         engine_id: str = "UAV-ENG-26054",
-        mission_id: str = "MIS-ALPHA-01"
+        mission_id: str = "MIS-ALPHA-01",
+        aircraft_id: str = "UAV-RUST-01",
+        callsign: str = "Garuda-1",
+        model_name: str = "DRDO RUSTOM-II MALE"
     ) -> TelemetryRecord:
         """
         Calculate expected nominal baseline telemetry values.
@@ -73,6 +76,9 @@ class PhysicsEngineModel:
 
         return TelemetryRecord(
             timestamp=timestamp,
+            aircraft_id=aircraft_id,
+            callsign=callsign,
+            model_name=model_name,
             engine_id=engine_id,
             mission_id=mission_id,
             mission_phase=mission_phase,

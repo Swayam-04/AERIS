@@ -69,6 +69,47 @@ class SystemElectricalTelemetry(BaseModel):
     status: str = Field(default="NORMAL", description="NORMAL, WARNING, DEGRADED, CRITICAL")
 
 
+class AircraftCoordinates(BaseModel):
+    latitude: float = Field(default=26.9124, description="Latitude in decimal degrees")
+    longitude: float = Field(default=70.9015, description="Longitude in decimal degrees")
+    altitude_ft: float = Field(default=15000.0, description="Altitude in feet AMSL")
+    heading_deg: float = Field(default=85.0, description="Heading in degrees (0-360)")
+    speed_knots: float = Field(default=120.0, description="Airspeed in knots")
+    sector: str = Field(default="Western Thar Border Sector", description="Operational tactical sector name")
+
+
+class UAVSummary(BaseModel):
+    aircraft_id: str = Field(..., description="Unique UAV airframe ID, e.g. UAV-RUST-01")
+    callsign: str = Field(..., description="Tactical callsign, e.g. Garuda-1")
+    model_name: str = Field(..., description="Airframe model name, e.g. DRDO RUSTOM-II MALE")
+    engine_id: str = Field(..., description="Engine serial ID, e.g. UAV-ENG-26054")
+    engine_model: str = Field(..., description="Engine model name, e.g. Lycoming O-320-D2J")
+    mission_id: str = Field(..., description="Mission identifier, e.g. MIS-ALPHA-01")
+    mission_type: str = Field(..., description="Mission operational type, e.g. Surveillance Patrol")
+    mission_phase: MissionPhase = Field(default=MissionPhase.CRUISE)
+    overall_health_score: float = Field(..., ge=0.0, le=100.0)
+    status: str = Field(default="normal", description="normal, warning, critical, standby")
+    active_fault: FaultType = Field(default=FaultType.NONE)
+    fault_severity: float = Field(default=0.0)
+    alerts_count: int = Field(default=0)
+    altitude_ft: float = Field(default=15000.0)
+    rpm: float = Field(default=2450.0)
+    battery_soc: float = Field(default=92.0)
+    bus_voltage: float = Field(default=28.2)
+    fuel_flow_lph: float = Field(default=24.5)
+    rul_hours: Optional[float] = Field(default=1200.0)
+    coordinates: Optional[AircraftCoordinates] = None
+
+
+class FleetSummaryResponse(BaseModel):
+    fleet: List[UAVSummary]
+    active_uav_id: str
+    total_airframes: int
+    active_sorties: int
+    average_health: float
+    total_alerts: int
+
+
 class ElectricalState(BaseModel):
     battery: BatteryTelemetry = Field(default_factory=BatteryTelemetry)
     alternator: AlternatorTelemetry = Field(default_factory=AlternatorTelemetry)
@@ -78,6 +119,9 @@ class ElectricalState(BaseModel):
 
 class TelemetryRecord(BaseModel):
     timestamp: float = Field(..., description="POSIX timestamp in seconds")
+    aircraft_id: str = Field(default="UAV-RUST-01", description="UAV airframe identifier")
+    callsign: str = Field(default="Garuda-1", description="Tactical callsign")
+    model_name: str = Field(default="DRDO RUSTOM-II MALE", description="Airframe model name")
     engine_id: str = Field(default="UAV-ENG-26054")
     mission_id: str = Field(default="MIS-ALPHA-01")
     mission_phase: MissionPhase = Field(default=MissionPhase.CRUISE)
@@ -98,6 +142,7 @@ class TelemetryRecord(BaseModel):
     
     # Unified Electrical Subsystem Digital Twin State
     electrical: Optional[ElectricalState] = Field(default=None)
+    coordinates: Optional[AircraftCoordinates] = Field(default=None)
 
     source_type: str = Field(default="simulated")
     schema_version: str = Field(default="2.0")
@@ -167,6 +212,9 @@ class ComponentFaultLocation(BaseModel):
 
 class DigitalTwinState(BaseModel):
     timestamp: float
+    aircraft_id: str = "UAV-RUST-01"
+    callsign: str = "Garuda-1"
+    model_name: str = "DRDO RUSTOM-II MALE"
     engine_id: str
     mission_id: str
     mission_phase: MissionPhase
@@ -181,9 +229,12 @@ class DigitalTwinState(BaseModel):
     alerts: List[DiagnosticAlert] = []
     rul: Optional[RULEstimate] = None
     affected_component: Optional[ComponentFaultLocation] = None
+    coordinates: Optional[AircraftCoordinates] = None
+    fleet_summary: Optional[List[UAVSummary]] = None
 
 
 class FaultInjectionRequest(BaseModel):
+    uav_id: Optional[str] = None
     fault_type: FaultType
     severity: float = Field(default=0.5, ge=0.0, le=1.0)
     duration_s: float = Field(default=60.0, ge=5.0)

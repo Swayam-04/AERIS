@@ -99,33 +99,33 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. Executive Title Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#162035] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-500/20 pb-3 bg-slate-950/40 p-3 rounded-lg backdrop-blur-sm shadow-md">
         <div>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-[#38bdf8]" />
-            <h1 className="text-lg font-bold text-slate-100 uppercase tracking-wide">
+          <div className="flex items-center gap-2.5">
+            <Cpu className="w-5 h-5 text-cyan-400 animate-pulse" />
+            <h1 className="text-lg font-extrabold text-slate-100 uppercase tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-slate-100 via-cyan-200 to-sky-400">
               AERIS Executive Condition & Health Console
             </h1>
           </div>
           <p className="text-xs text-slate-400 font-mono">
-            Aero Engine Reliability & Intelligence System | DRDO RUSTOM MALE UAV
+            Aero Engine Reliability & Intelligence System | {state.model_name || 'DRDO RUSTOM MALE UAV'} ({state.callsign || 'Garuda-1'})
           </p>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs">
-          <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
-            AIRCRAFT: <strong className="text-[#38bdf8]">DRDO RUSTOM</strong>
+          <div className="px-3 py-1 rounded-md bg-slate-900/80 border border-sky-500/30 text-slate-300 shadow-sm">
+            AIRCRAFT: <strong className="text-cyan-400 font-bold">{state.callsign || 'Garuda-1'} ({state.aircraft_id || 'UAV-RUST-01'})</strong>
           </div>
-          <div className="px-2.5 py-1 rounded bg-[#090e1c] border border-[#162035] text-slate-300">
-            POWERPLANT: <strong className="text-emerald-400">LYCOMING O-320 (150 HP)</strong>
+          <div className="px-3 py-1 rounded-md bg-slate-900/80 border border-emerald-500/30 text-slate-300 shadow-sm">
+            POWERPLANT: <strong className="text-emerald-400 font-bold">{state.engine_id ? state.engine_id.toUpperCase() : 'LYCOMING O-320 (150 HP)'}</strong>
           </div>
           {onNavigateToEngineMap && (
             <button
               onClick={onNavigateToEngineMap}
-              className="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-800/80 text-cyan-300 font-mono font-semibold transition flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-1 rounded-md bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 font-mono font-bold transition flex items-center gap-1.5 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
               title="Open dedicated Engine Health & 3D Fault Map"
             >
-              <Crosshair size={12} className="text-cyan-400" />
+              <Crosshair size={13} className="text-cyan-400" />
               <span>3D FAULT MAP</span>
             </button>
           )}

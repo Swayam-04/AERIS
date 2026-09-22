@@ -63,8 +63,52 @@ export interface ElectricalState {
   system: SystemElectricalTelemetry;
 }
 
+export interface AircraftCoordinates {
+  latitude: number;
+  longitude: number;
+  altitude_ft: number;
+  heading_deg: number;
+  speed_knots: number;
+  sector: string;
+}
+
+export interface UAVSummary {
+  aircraft_id: string;
+  callsign: string;
+  model_name: string;
+  engine_id: string;
+  engine_model: string;
+  mission_id: string;
+  mission_type: string;
+  mission_phase: MissionPhase;
+  overall_health_score: number;
+  status: 'normal' | 'warning' | 'critical' | 'standby' | string;
+  active_fault: FaultType;
+  fault_severity: number;
+  alerts_count: number;
+  altitude_ft: number;
+  rpm: number;
+  battery_soc: number;
+  bus_voltage: number;
+  fuel_flow_lph: number;
+  rul_hours?: number;
+  coordinates?: AircraftCoordinates;
+}
+
+export interface FleetSummaryResponse {
+  fleet: UAVSummary[];
+  active_uav_id: string;
+  total_airframes: number;
+  active_sorties: number;
+  average_health: number;
+  total_alerts: number;
+}
+
 export interface TelemetryRecord {
   timestamp: number;
+  aircraft_id?: string;
+  callsign?: string;
+  model_name?: string;
   engine_id: string;
   mission_id: string;
   mission_phase: MissionPhase;
@@ -81,6 +125,7 @@ export interface TelemetryRecord {
   injection_timing_deg: number;
   battery_volts: number;
   electrical?: ElectricalState;
+  coordinates?: AircraftCoordinates;
   source_type: string;
   schema_version: string;
 }
@@ -148,6 +193,9 @@ export interface ComponentFaultLocation {
 
 export interface DigitalTwinState {
   timestamp: number;
+  aircraft_id?: string;
+  callsign?: string;
+  model_name?: string;
   engine_id: string;
   mission_id: string;
   mission_phase: MissionPhase;
@@ -162,9 +210,14 @@ export interface DigitalTwinState {
   alerts: DiagnosticAlert[];
   rul: RULEstimate | null;
   affected_component?: ComponentFaultLocation | null;
+  coordinates?: AircraftCoordinates;
+  fleet_summary?: UAVSummary[];
 }
 
 export interface UAV3DState {
+  aircraftId?: string;
+  callsign?: string;
+  modelName?: string;
   engineHealth: number;
   engineStatus: string;
   missionPhase: string;

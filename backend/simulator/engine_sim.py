@@ -1,7 +1,7 @@
 import math
 import random
 from typing import Dict, Optional, Tuple
-from backend.schemas.telemetry import TelemetryRecord, MissionPhase, FaultType
+from backend.schemas.telemetry import TelemetryRecord, MissionPhase, FaultType, AircraftCoordinates
 from backend.physics.physics_model import PhysicsEngineModel
 from backend.physics.electrical_model import ElectricalSubsystemPhysicsModel
 
@@ -11,18 +11,50 @@ class EngineSimulator:
     Deterministic Aero-Piston Engine & Electrical Digital-Twin Telemetry Simulator.
     Simulates real-time telemetry generation across flight phases with coupled
     alternator mechanical drive, aircraft electrical load, battery electrochemistry,
-    and controlled fault injection.
+    tactical airspace coordinates, and controlled fault injection.
     """
 
-    def __init__(self, seed: int = 42):
+    def __init__(
+        self,
+        aircraft_id: str = "UAV-RUST-01",
+        callsign: str = "Garuda-1",
+        model_name: str = "DRDO RUSTOM-II MALE",
+        engine_id: str = "UAV-ENG-26054",
+        engine_model: str = "Lycoming O-320-D2J",
+        mission_id: str = "MIS-ALPHA-01",
+        mission_type: str = "Border Surveillance Patrol",
+        initial_phase: MissionPhase = MissionPhase.CRUISE,
+        base_lat: float = 26.9124,
+        base_lon: float = 70.9015,
+        sector: str = "Western Thar Border Sector",
+        base_speed: float = 120.0,
+        base_heading: float = 85.0,
+        seed: int = 42
+    ):
+        self.aircraft_id = aircraft_id
+        self.callsign = callsign
+        self.model_name = model_name
+        self.engine_id = engine_id
+        self.engine_model = engine_model
+        self.mission_id = mission_id
+        self.mission_type = mission_type
         self.seed = seed
         self.rng = random.Random(seed)
         self.physics_model = PhysicsEngineModel()
         self.electrical_model = ElectricalSubsystemPhysicsModel()
         
+        # Spatial / Tactical Coordinates
+        self.base_lat = base_lat
+        self.base_lon = base_lon
+        self.current_lat = base_lat
+        self.current_lon = base_lon
+        self.heading_deg = base_heading
+        self.speed_knots = base_speed
+        self.sector = sector
+
         # Simulation state
         self.elapsed_time: float = 0.0
-        self.current_phase: MissionPhase = MissionPhase.CRUISE
+        self.current_phase: MissionPhase = initial_phase
         self.active_fault: FaultType = FaultType.NONE
         self.fault_severity: float = 0.0
         self.fault_start_time: float = 0.0
@@ -33,6 +65,8 @@ class EngineSimulator:
         self.rng = random.Random(self.seed)
         self.electrical_model.reset()
         self.elapsed_time = 0.0
+        self.current_lat = self.base_lat
+        self.current_lon = self.base_lon
         self.current_phase = MissionPhase.CRUISE
         self.active_fault = FaultType.NONE
         self.fault_severity = 0.0
@@ -68,6 +102,36 @@ class EngineSimulator:
             return (35.0, 1000.0, 18.0)
         return (70.0, 10000.0, 5.0)
 
+    def _update_coordinates(self, dt_seconds: float, altitude_ft: float):
+        """Simulate realistic tactical waypoint navigation and gentle vector orbital paths."""
+        # Speed varies with phase
+        if self.current_phase == MissionPhase.TAKEOFF:
+            self.speed_knots = 75.0
+        elif self.current_phase == MissionPhase.CLIMB:
+            self.speed_knots = 95.0
+        elif self.current_phase == MissionPhase.CRUISE:
+            self.speed_knots = self.speed_knots + 0.1 * math.sin(self.elapsed_time / 10.0)
+        elif self.current_phase == MissionPhase.LOITER:
+            self.speed_knots = 85.0
+            # Loiter produces slow orbit rotation
+            self.heading_deg = (self.heading_deg + 1.2 * dt_seconds) % 360.0
+        elif self.current_phase == MissionPhase.RETURN:
+            self.speed_knots = 110.0
+            self.heading_deg = (self.heading_deg + 0.2 * dt_seconds) % 360.0
+        elif self.current_phase == MissionPhase.LANDING:
+            self.speed_knots = 65.0
+
+        # Calculate latitude/longitude movement (approximate spherical projection delta)
+        # 1 knot ~ 0.000514 km/s. 1 deg lat ~ 111 km.
+        speed_km_s = (self.speed_knots * 1.852) / 3600.0
+        distance_km = speed_km_s * dt_seconds
+        rad = math.radians(self.heading_deg)
+        d_lat = (distance_km * math.cos(rad)) / 111.0
+        d_lon = (distance_km * math.sin(rad)) / (111.0 * max(0.1, math.cos(math.radians(self.current_lat))))
+
+        self.current_lat += d_lat
+        self.current_lon += d_lon
+
     def step(self, dt_seconds: float = 1.0) -> TelemetryRecord:
         """
         Advance simulation by dt_seconds and return observed telemetry with synchronized electrical twin.
@@ -80,13 +144,21 @@ class EngineSimulator:
         wobble = math.sin(self.elapsed_time / 15.0) * 0.8
         throttle = max(0.0, min(100.0, throttle_pct + wobble))
 
+        # Update tactical position
+        self._update_coordinates(dt_seconds, altitude_ft)
+
         # Base nominal values from physics model
         expected = self.physics_model.compute_expected(
             timestamp=self.elapsed_time,
             throttle_pct=throttle,
             altitude_ft=altitude_ft,
             ambient_temp_c=ambient_temp_c,
-            mission_phase=self.current_phase
+            mission_phase=self.current_phase,
+            engine_id=self.engine_id,
+            mission_id=self.mission_id,
+            aircraft_id=self.aircraft_id,
+            callsign=self.callsign,
+            model_name=self.model_name
         )
 
         # Apply sensor measurement noise (Gaussian)
@@ -149,10 +221,22 @@ class EngineSimulator:
         # Bus voltage with realistic sensor noise
         bus_volts = electrical_state.system.bus_voltage + self.rng.gauss(0, 0.04)
 
+        coordinates = AircraftCoordinates(
+            latitude=round(self.current_lat, 4),
+            longitude=round(self.current_lon, 4),
+            altitude_ft=round(altitude_ft, 0),
+            heading_deg=round(self.heading_deg, 1),
+            speed_knots=round(self.speed_knots, 1),
+            sector=self.sector
+        )
+
         return TelemetryRecord(
             timestamp=round(self.elapsed_time, 2),
-            engine_id="UAV-ENG-26054",
-            mission_id="MIS-ALPHA-01",
+            aircraft_id=self.aircraft_id,
+            callsign=self.callsign,
+            model_name=self.model_name,
+            engine_id=self.engine_id,
+            mission_id=self.mission_id,
             mission_phase=self.current_phase,
             throttle_pct=round(throttle, 1),
             altitude_ft=round(altitude_ft, 0),
@@ -167,6 +251,7 @@ class EngineSimulator:
             injection_timing_deg=round(timing, 1),
             battery_volts=round(bus_volts, 2),
             electrical=electrical_state,
+            coordinates=coordinates,
             source_type="simulated",
             schema_version="2.0"
         )

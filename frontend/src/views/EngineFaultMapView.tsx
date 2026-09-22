@@ -269,7 +269,7 @@ export const EngineFaultMapView: React.FC<EngineFaultMapViewProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono">
-                Lycoming O-320 Horizontally Opposed 4-Cylinder Aero-Piston Engine Digital Twin
+                {state.callsign || 'Garuda-1'} ({state.model_name || 'DRDO RUSTOM-II'}) | {state.engine_id || 'Lycoming O-320'} Digital Twin Architecture
               </p>
             </div>
           </div>
